@@ -39,7 +39,7 @@ function render() {
   if (state.reloadBanner) {
     const box = document.createElement('div')
     box.className = 'banner reload'
-    box.textContent = state.reloadBanner + ' '
+    box.textContent = state.reloadBanner
     const reloadButton = document.createElement('button')
     reloadButton.className = 'reload'
     reloadButton.textContent = state.labels.reloadVscode
