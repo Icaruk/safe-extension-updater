@@ -112,7 +112,8 @@
     "test": "tsx --test test/*.test.ts",
     "lint": "biome check",
     "format": "biome check --write",
-    "package": "vsce package --no-dependencies -o build/"
+    "package": "vsce package --no-dependencies -o build/",
+    "publish": "vsce publish --no-dependencies"
   },
   "devDependencies": {
     "@biomejs/biome": "2.6.4",
