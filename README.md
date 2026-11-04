@@ -13,6 +13,7 @@ Extension updates are a **supply chain attack vector**: a compromised publisher 
 - Very recent releases (default < 24 h) are flagged red and skipped by bulk updates.
 - Every update is checked against [OSV.dev](https://osv.dev), so **known malicious packages are blocked**.
 - If the **installed** version has active OSV findings, the row shows a yellow **Must update** button with links to the advisories — that update fixes them.
+- Installed updates apply on the next window reload; the view shows what is pending a reload.
 - `Update all safely`: updates only releases older than the configured threshold and never OSV-flagged malicious ones.
 - Detects when single extension auto-update is on, and fixes it in one click.
 - Visual Studio Marketplace and Open VSX, auto-detected.

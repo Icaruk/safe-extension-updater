@@ -2,7 +2,7 @@
   "name": "safe-extension-updater",
   "displayName": "Safe Extension Updater",
   "description": "%extension.description%",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "publisher": "icaruk",
   "license": "MIT",
   "icon": "media/icon.png",
