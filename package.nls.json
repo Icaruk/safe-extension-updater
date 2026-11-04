@@ -1,0 +1,15 @@
+{
+  "extension.description": "Protects you from malicious updates, unsafe native auto-update setups, and releases published too recently to be trusted.",
+  "viewsContainers.activitybar.title": "Safe Extension Updater",
+  "views.updates.name": "Pending updates:",
+  "command.category": "Safe Extension Updater",
+  "command.updateAll.title": "Update all safely",
+  "command.refresh.title": "Refresh",
+  "configuration.title": "Safe Extension Updater",
+  "config.earlyReleaseProtectionHours.description": "Hours after a release during which installs are guarded: it is flagged red in the list, single updates ask for confirmation and Update all skips it.",
+  "config.refreshIntervalHours.description": "Hours between automatic checks. 0 disables periodic checks.",
+  "config.gallery.description": "Extension gallery to query for updates.",
+  "config.gallery.auto": "Automatic: Visual Studio Marketplace on VS Code, Open VSX on forks (VSCodium, Cursor, Windsurf…).",
+  "config.gallery.marketplace": "Visual Studio Marketplace.",
+  "config.gallery.openvsx": "Open VSX Registry."
+}

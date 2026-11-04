@@ -1,0 +1,124 @@
+{
+  "name": "safe-extension-updater",
+  "displayName": "Safe Extension Updater",
+  "description": "%extension.description%",
+  "version": "1.0.0",
+  "publisher": "icaruk",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Icaruk/safe-extension-updater.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "extensionKind": [
+    "ui"
+  ],
+  "keywords": [
+    "update",
+    "security",
+    "malware",
+    "osv",
+    "safe",
+    "auto-update",
+    "upgrade"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    },
+    "virtualWorkspaces": true
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "extension-updater",
+          "title": "%viewsContainers.activitybar.title%",
+          "icon": "media/activity-bar.svg"
+        }
+      ]
+    },
+    "views": {
+      "extension-updater": [
+        {
+          "id": "extensionUpdater.updates",
+          "name": "%views.updates.name%",
+          "icon": "media/activity-bar.svg",
+          "type": "webview"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "extensionUpdater.updateAll",
+        "title": "%command.updateAll.title%",
+        "category": "%command.category%",
+        "icon": "$(cloud-download)"
+      },
+      {
+        "command": "extensionUpdater.refresh",
+        "title": "%command.refresh.title%",
+        "category": "%command.category%",
+        "icon": "$(sync)"
+      }
+    ],
+    "configuration": {
+      "title": "%configuration.title%",
+      "properties": {
+        "extensionUpdater.earlyReleaseProtectionHours": {
+          "type": "number",
+          "default": 24,
+          "minimum": 0,
+          "description": "%config.earlyReleaseProtectionHours.description%"
+        },
+        "extensionUpdater.refreshIntervalHours": {
+          "type": "number",
+          "default": 2,
+          "minimum": 0,
+          "description": "%config.refreshIntervalHours.description%"
+        },
+        "extensionUpdater.gallery": {
+          "type": "string",
+          "enum": [
+            "auto",
+            "marketplace",
+            "openvsx"
+          ],
+          "enumDescriptions": [
+            "%config.gallery.auto%",
+            "%config.gallery.marketplace%",
+            "%config.gallery.openvsx%"
+          ],
+          "default": "auto",
+          "description": "%config.gallery.description%"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "tsx --test test/*.test.ts",
+    "package": "vsce package --no-dependencies -o build/extension-updater-$npm_package_version.vsix"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.1.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0",
+    "vsce": "^2.15.0"
+  },
+  "packageManager": "pnpm@12.16.1"
+}
