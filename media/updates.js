@@ -21,17 +21,9 @@ function render() {
   line.append(state.labels.autoUpdateText[state.autoUpdate])
   autoUpdate.appendChild(line)
   if (state.needsReload) {
-    const reload = document.createElement('button')
-    reload.className = 'fix'
-    reload.textContent = state.labels.reload
-    reload.addEventListener('click', () => vscode.postMessage({ type: 'reload' }))
-    autoUpdate.appendChild(reload)
+    autoUpdate.appendChild(actionButton(state.labels.reload, 'reload', 'fix'))
   } else if (state.autoUpdate !== 'disabled') {
-    const fix = document.createElement('button')
-    fix.className = 'fix'
-    fix.textContent = state.labels.fix
-    fix.addEventListener('click', () => vscode.postMessage({ type: 'fixAutoUpdate' }))
-    autoUpdate.appendChild(fix)
+    autoUpdate.appendChild(actionButton(state.labels.fix, 'fixAutoUpdate', 'fix'))
   }
 
   const banner = document.getElementById('banner')
@@ -42,10 +34,7 @@ function render() {
     const box = document.createElement('div')
     box.className = 'banner reload'
     box.textContent = state.reloadBanner
-    const reloadButton = document.createElement('button')
-    reloadButton.className = 'reload'
-    reloadButton.textContent = state.labels.reloadVscode
-    reloadButton.addEventListener('click', () => vscode.postMessage({ type: 'reload' }))
+    const reloadButton = actionButton(state.labels.reloadVscode, 'reload', 'reload')
     box.appendChild(reloadButton)
     reloadBanner.appendChild(box)
   }
@@ -62,14 +51,8 @@ function render() {
   actions.textContent = ''
   actions.style.display = state.updates.length > 0 ? '' : 'none'
   if (state.updates.length > 0) {
-    const checkButton = document.createElement('button')
-    checkButton.textContent = state.labels.checkUpdates
-    checkButton.addEventListener('click', () => vscode.postMessage({ type: 'refresh' }))
-    actions.appendChild(checkButton)
-    const updateAllButton = document.createElement('button')
-    updateAllButton.textContent = state.labels.updateAll
-    updateAllButton.addEventListener('click', () => vscode.postMessage({ type: 'updateAll' }))
-    actions.appendChild(updateAllButton)
+    actions.appendChild(actionButton(state.labels.checkUpdates, 'refresh'))
+    actions.appendChild(actionButton(state.labels.updateAll, 'updateAll'))
   }
 
   const title = document.getElementById('pending-title')
@@ -77,10 +60,7 @@ function render() {
   if (state.updates.length > 0) {
     title.textContent = state.labels.pendingUpdates
   } else {
-    const checkButton = document.createElement('button')
-    checkButton.textContent = state.labels.checkUpdates
-    checkButton.addEventListener('click', () => vscode.postMessage({ type: 'refresh' }))
-    title.appendChild(checkButton)
+    title.appendChild(actionButton(state.labels.checkUpdates, 'refresh'))
   }
 
   const list = document.getElementById('list')
@@ -88,7 +68,8 @@ function render() {
   if (state.updates.length === 0 && !state.searching) {
     const empty = document.createElement('div')
     empty.className = 'empty'
-    empty.textContent = state.labels.empty
+    empty.appendChild(stateIcon(CHECK_PATH))
+    empty.append(state.labels.empty)
     list.appendChild(empty)
   }
   for (const update of state.updates) {
@@ -133,30 +114,10 @@ function row(update) {
     main.appendChild(past)
   }
   if (update.installedVulns?.length) {
-    const installed = document.createElement('div')
-    installed.className = 'installed-vulns'
-    installed.append(`${state.labels.installedVulns} `)
-    update.installedVulns.forEach((osvId, index) => {
-      if (index > 0) installed.append(', ')
-      const link = document.createElement('a')
-      link.href = `https://osv.dev/vulnerability/${osvId}`
-      link.textContent = osvId
-      installed.append(link)
-    })
-    main.appendChild(installed)
+    main.appendChild(osvList('installed-vulns', state.labels.installedVulns, update.installedVulns))
   }
   if (update.malicious?.length) {
-    const findings = document.createElement('div')
-    findings.className = 'findings'
-    findings.append(`${state.labels.maliciousFindings} `)
-    update.malicious.forEach((osvId, index) => {
-      if (index > 0) findings.append(', ')
-      const link = document.createElement('a')
-      link.href = `https://osv.dev/vulnerability/${osvId}`
-      link.textContent = osvId
-      findings.append(link)
-    })
-    main.appendChild(findings)
+    main.appendChild(osvList('findings', state.labels.maliciousFindings, update.malicious))
   }
   rowEl.appendChild(main)
 
@@ -168,12 +129,44 @@ function row(update) {
     return rowEl
   }
 
+  if (update.updating) {
+    const tag = document.createElement('span')
+    tag.className = 'tag updating'
+    tag.textContent = state.labels.updating
+    rowEl.appendChild(tag)
+    return rowEl
+  }
+
   const button = document.createElement('button')
   button.className = update.installedVulns?.length ? 'must' : update.recent ? 'soon' : ''
   button.textContent = update.installedVulns?.length ? state.labels.mustUpdate : state.labels.update
   button.addEventListener('click', () => vscode.postMessage({ type: 'update', update }))
   rowEl.appendChild(button)
   return rowEl
+}
+
+/** Button that sends a message to the host on click. */
+function actionButton(label, type, className) {
+  const button = document.createElement('button')
+  if (className) button.className = className
+  button.textContent = label
+  button.addEventListener('click', () => vscode.postMessage({ type }))
+  return button
+}
+
+/** Div with a label followed by comma-separated links to OSV entries. */
+function osvList(className, label, osvIds) {
+  const box = document.createElement('div')
+  box.className = className
+  box.append(`${label} `)
+  osvIds.forEach((osvId, index) => {
+    if (index > 0) box.append(', ')
+    const link = document.createElement('a')
+    link.href = `https://osv.dev/vulnerability/${osvId}`
+    link.textContent = osvId
+    box.append(link)
+  })
+  return box
 }
 
 /** Codicon paths (microsoft/vscode-codicons); tinted by CSS via currentColor. */

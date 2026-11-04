@@ -8,7 +8,8 @@ body { padding: 8px 12px; font-family: var(--vscode-font-family); font-size: var
 .banner { margin: 0 0 8px; padding: 6px 10px; border: 1px solid var(--vscode-editorWarning-foreground); color: var(--vscode-editorWarning-foreground); border-radius: 3px; }
 #reload-banner .banner { margin: 0 0 8px; background-color: rgba(0, 242, 0, 0.03); }
 .status { color: var(--vscode-descriptionForeground); padding: 4px 0; }
-.empty { color: var(--vscode-descriptionForeground); padding: 12px 0; }
+.empty { display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--vscode-descriptionForeground); padding: 12px 0; }
+.empty svg { fill: currentColor; color: var(--vscode-charts-green); flex: none; }
 .row { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-radius: 4px; }
 .row:not(:last-child) { border-bottom: 1px solid var(--vscode-panel-border); }
 .row:hover { background: var(--vscode-list-hoverBackground); }
@@ -38,6 +39,7 @@ button.must { background: var(--vscode-charts-yellow, #e0b64d); color: rgb(20, 2
 button.must:hover { filter: brightness(0.85); }
 .tag { flex: none; min-width: 0; padding: 4px 8px; border-radius: 10px; font-size: 0.9em; font-weight: bold; }
 .tag.updated { border: 1px solid var(--vscode-charts-green); color: var(--vscode-charts-green); }
+.tag.updating { border: 1px solid var(--vscode-descriptionForeground); color: var(--vscode-descriptionForeground); }
 .tag.malware { border: 1px solid var(--vscode-errorForeground); color: var(--vscode-errorForeground); }
 .banner.reload { border-color: var(--vscode-charts-green); color: var(--vscode-foreground); display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
 .banner.reload button { flex: none; }

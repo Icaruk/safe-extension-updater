@@ -83,7 +83,11 @@ export class Updater {
    * Per-extension failures are collected, never fatal. Returns the ids
    * actually installed.
    */
-  async updateAll(updates: readonly PendingUpdate[], thresholdHours: number): Promise<UpdateAllResult> {
+  async updateAll(
+    updates: readonly PendingUpdate[],
+    thresholdHours: number,
+    onInstalling?: (id: string) => void,
+  ): Promise<UpdateAllResult> {
     const now = new Date()
     const selected = updates.filter(
       (update) => !isRecentRelease(update.releasedAt, now, thresholdHours) && !update.malicious?.length,
@@ -91,6 +95,7 @@ export class Updater {
     const updatedIds: string[] = []
     const failures: string[] = []
     for (const update of selected) {
+      onInstalling?.(update.id)
       try {
         await this.install(update)
         updatedIds.push(update.id)

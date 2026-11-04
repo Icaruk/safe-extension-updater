@@ -94,11 +94,19 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // In-memory cache: avoid re-querying the gallery on every view open.
   let cache: { fetchedAt: number; updates: readonly PendingUpdate[] } = { fetchedAt: 0, updates: [] }
-  /** ids installed this session; the running version only changes after reload */
-  let waitingReload: readonly string[] = []
+  /** ids installed this session; the running version only changes after reload.
+   * Persisted: updating this extension itself restarts the extension host,
+   * which would wipe in-memory state (and the Updated tag with it). */
+  let waitingReload: readonly string[] = context.globalState.get<string[]>('waitingReload') ?? []
+  const setWaitingReload = (ids: readonly string[]): void => {
+    waitingReload = ids
+    void context.globalState.update('waitingReload', ids)
+  }
   let refreshing: Promise<void> | undefined
   let queryError: string | undefined
   let timer: ReturnType<typeof setInterval> | undefined
+  /** id with an install in flight; shown as a grey "Updating…" tag */
+  let updatingId: string | undefined
 
   const model: UpdatesModel = {
     get updates() {
@@ -109,6 +117,9 @@ export function activate(context: vscode.ExtensionContext): void {
     },
     get thresholdHours() {
       return readConfig().thresholdHours
+    },
+    get updatingId() {
+      return updatingId
     },
   }
   /** View message priority: query errors only; auto-update state has its own view section. */
@@ -164,8 +175,11 @@ export function activate(context: vscode.ExtensionContext): void {
         // F5 launch only: append the sample rows so every UI case is visible.
         if (context.extensionMode === vscode.ExtensionMode.Development) {
           cache = { ...cache, updates: [...cache.updates, ...mockUpdates()] }
-          waitingReload = [...new Set([...waitingReload, 'sample.updated'])]
+          setWaitingReload([...new Set([...waitingReload, 'sample.updated'])])
         }
+        // Prune ids that no longer have a pending row: after a window reload
+        // the updated extensions are current again and their rows are gone.
+        setWaitingReload(waitingReload.filter((id) => cache.updates.some((entry) => entry.id === id)))
         queryError = undefined
       } catch (error) {
         queryError = strings.queryError(String(error)) // keep showing the previous cache
@@ -197,18 +211,22 @@ export function activate(context: vscode.ExtensionContext): void {
       const update = asPendingUpdate(value)
       if (!update) return
       try {
+        updatingId = update.id
+        webview.invalidate()
         const outcome = await updater.updateOne(update, readConfig().thresholdHours)
         if (outcome === 'updated') {
           // No forced refresh: until the window reloads, VS Code still reports
           // the OLD running version, so a re-query would re-detect this same
           // pending update. Mark the row Updated instead; it disappears on the
           // first refresh after reload.
-          waitingReload = [...new Set([...waitingReload, update.id])]
+          setWaitingReload([...new Set([...waitingReload, update.id])])
         }
       } catch (error) {
         void vscode.window.showErrorMessage(strings.updateFailed(update.id, String(error)))
+      } finally {
+        updatingId = undefined
+        webview.invalidate()
       }
-      webview.invalidate()
     }),
     vscode.commands.registerCommand('extensionUpdater.updateAll', async () => {
       const updates = cache.updates
@@ -221,8 +239,13 @@ export function activate(context: vscode.ExtensionContext): void {
         const result = await updater.updateAll(
           cache.updates.filter((entry) => !skip.has(entry.id)),
           readConfig().thresholdHours,
+          (id) => {
+            updatingId = id
+            webview.invalidate()
+          },
         )
-        waitingReload = [...new Set([...waitingReload, ...result.updatedIds])]
+        updatingId = undefined
+        setWaitingReload([...new Set([...waitingReload, ...result.updatedIds])])
         if (result.failures.length > 0) {
           void vscode.window.showErrorMessage(strings.updateAllSummary(result.updatedIds.length, result.failures))
         }

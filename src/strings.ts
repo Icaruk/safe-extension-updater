@@ -8,6 +8,7 @@ export const strings = {
   updateButton: 'Update',
   mustUpdateButton: 'Must update',
   updatedButton: 'Updated',
+  updatingButton: 'Updating…',
   reloadBanner: (count: number): string =>
     `${count} ${count === 1 ? 'update' : 'updates'} installed. Reload VS Code to take effect.`,
   reloadVscode: 'Reload VS Code',

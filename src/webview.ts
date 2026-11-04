@@ -11,6 +11,8 @@ export interface UpdatesModel {
   readonly pendingReload: readonly string[]
   /** `extensionUpdater.earlyReleaseProtectionHours`, read live so config changes apply on refresh */
   readonly thresholdHours: number
+  /** id with an install in flight right now; shown as a grey "Updating…" tag */
+  readonly updatingId: string | undefined
 }
 
 /** PendingUpdate as rendered in the webview: ages resolved on the host side. */
@@ -27,6 +29,8 @@ interface WebUpdate {
   readonly recent: boolean
   /** installed this session; waiting for reload to take effect */
   readonly updated: boolean
+  /** install in flight right now */
+  readonly updating: boolean
   readonly malicious?: readonly string[]
   readonly pastVulnsLabel?: string
   /** OSV ids affecting the installed version; the update fixes them */
@@ -143,6 +147,7 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
       age: relativeAge(update.releasedAt, now),
       recent: isRecentRelease(update.releasedAt, now, this.model.thresholdHours),
       updated: waiting.has(update.id),
+      updating: update.id === this.model.updatingId,
       malicious: update.malicious,
       pastVulnsLabel: update.pastVulns ? strings.pastVulns(update.pastVulns) : undefined,
       installedVulns: update.installedVulns,
@@ -167,6 +172,7 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
         maliciousButton: strings.maliciousButton,
         mustUpdate: strings.mustUpdateButton,
         updated: strings.updatedButton,
+        updating: strings.updatingButton,
         reloadVscode: strings.reloadVscode,
         installedVulns: strings.installedVulns,
         fix: strings.fixAutoUpdate,
