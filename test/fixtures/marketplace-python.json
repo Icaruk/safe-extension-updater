@@ -1,0 +1,117 @@
+{
+  "results": [
+    {
+      "extensions": [
+        {
+          "publisher": { "publisherName": "ms-python" },
+          "extensionName": "python",
+          "displayName": "Python",
+          "versions": [
+            {
+              "version": "2026.11.2026102901",
+              "lastUpdated": "2026-10-29T14:13:58.763Z",
+              "properties": [
+                { "key": "Microsoft.VisualStudio.Code.Engine", "value": "^1.95.0" },
+                { "key": "Microsoft.VisualStudio.Code.PreRelease", "value": "true" }
+              ]
+            },
+            {
+              "version": "2026.11.2026102901",
+              "lastUpdated": "2026-10-29T14:13:14.593Z",
+              "properties": [
+                { "key": "Microsoft.VisualStudio.Code.Engine", "value": "^1.95.0" },
+                { "key": "Microsoft.VisualStudio.Code.PreRelease", "value": "true" }
+              ]
+            },
+            {
+              "version": "2026.11.2026102901",
+              "lastUpdated": "2026-10-29T14:13:10.56Z",
+              "properties": [
+                { "key": "Microsoft.VisualStudio.Code.Engine", "value": "^1.95.0" },
+                { "key": "Microsoft.VisualStudio.Code.PreRelease", "value": "true" }
+              ]
+            },
+            {
+              "version": "2026.11.2026102901",
+              "lastUpdated": "2026-10-29T14:12:30.667Z",
+              "properties": [
+                { "key": "Microsoft.VisualStudio.Code.Engine", "value": "^1.95.0" },
+                { "key": "Microsoft.VisualStudio.Code.PreRelease", "value": "true" }
+              ]
+            },
+            {
+              "version": "2026.11.2026102901",
+              "lastUpdated": "2026-10-29T14:11:33.417Z",
+              "properties": [
+                { "key": "Microsoft.VisualStudio.Code.Engine", "value": "^1.95.0" },
+                { "key": "Microsoft.VisualStudio.Code.PreRelease", "value": "true" }
+              ]
+            },
+            {
+              "version": "2026.11.2026102901",
+              "lastUpdated": "2026-10-29T14:10:49.707Z",
+              "properties": [
+                { "key": "Microsoft.VisualStudio.Code.Engine", "value": "^1.95.0" },
+                { "key": "Microsoft.VisualStudio.Code.PreRelease", "value": "true" }
+              ]
+            },
+            {
+              "version": "2026.11.2026102901",
+              "lastUpdated": "2026-10-29T14:10:25.693Z",
+              "properties": [
+                { "key": "Microsoft.VisualStudio.Code.Engine", "value": "^1.95.0" },
+                { "key": "Microsoft.VisualStudio.Code.PreRelease", "value": "true" }
+              ]
+            },
+            {
+              "version": "2026.11.2026102901",
+              "lastUpdated": "2026-10-29T14:10:17.857Z",
+              "properties": [
+                { "key": "Microsoft.VisualStudio.Code.Engine", "value": "^1.95.0" },
+                { "key": "Microsoft.VisualStudio.Code.PreRelease", "value": "true" }
+              ]
+            },
+            {
+              "version": "2026.11.2026102901",
+              "lastUpdated": "2026-10-29T14:10:05.75Z",
+              "properties": [
+                { "key": "Microsoft.VisualStudio.Code.Engine", "value": "^1.95.0" },
+                { "key": "Microsoft.VisualStudio.Code.PreRelease", "value": "true" }
+              ]
+            },
+            {
+              "version": "2026.11.2026102901",
+              "lastUpdated": "2026-10-29T11:11:32.39Z",
+              "properties": [
+                { "key": "Microsoft.VisualStudio.Code.Engine", "value": "^1.95.0" },
+                { "key": "Microsoft.VisualStudio.Code.PreRelease", "value": "true" }
+              ]
+            },
+            {
+              "version": "2024.9.11721010",
+              "lastUpdated": "2024-06-20T10:20:37.73Z",
+              "properties": [
+                { "key": "Microsoft.VisualStudio.Code.Engine", "value": "^1.89.0-20240415" },
+                { "key": "Microsoft.VisualStudio.Code.PreRelease", "value": "true" }
+              ]
+            }
+          ]
+        },
+        {
+          "publisher": { "publisherName": "esbenp" },
+          "extensionName": "prettier-vscode",
+          "displayName": "Prettier - Code formatter",
+          "versions": [
+            {
+              "version": "12.4.0",
+              "lastUpdated": "2026-03-16T19:18:07.213Z",
+              "properties": [
+                { "key": "Microsoft.VisualStudio.Code.Engine", "value": "^1.101.0" }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
