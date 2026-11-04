@@ -6,6 +6,7 @@ body { padding: 8px 12px; font-family: var(--vscode-font-family); font-size: var
 #auto-update:not(.centered) .auto-update svg { color: var(--vscode-charts-red); }
 #auto-update button { flex: none; }
 .banner { margin: 0 0 8px; padding: 6px 10px; border: 1px solid var(--vscode-editorWarning-foreground); color: var(--vscode-editorWarning-foreground); border-radius: 3px; }
+#reload-banner .banner { margin: 0 0 8px; }
 .status { color: var(--vscode-descriptionForeground); padding: 4px 0; }
 .empty { color: var(--vscode-descriptionForeground); padding: 12px 0; }
 .row { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-radius: 4px; }

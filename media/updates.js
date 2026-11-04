@@ -36,6 +36,8 @@ function render() {
 
   const banner = document.getElementById('banner')
   banner.textContent = ''
+  const reloadBanner = document.getElementById('reload-banner')
+  reloadBanner.textContent = ''
   if (state.reloadBanner) {
     const box = document.createElement('div')
     box.className = 'banner reload'
@@ -45,7 +47,7 @@ function render() {
     reloadButton.textContent = state.labels.reloadVscode
     reloadButton.addEventListener('click', () => vscode.postMessage({ type: 'reload' }))
     box.appendChild(reloadButton)
-    banner.appendChild(box)
+    reloadBanner.appendChild(box)
   }
   if (state.banner) {
     const box = document.createElement('div')

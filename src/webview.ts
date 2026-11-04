@@ -200,6 +200,7 @@ function renderHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
 <div id="auto-update"></div>
 <div id="banner"></div>
 <div id="actions-group"></div>
+<div id="reload-banner"></div>
 <div id="pending-title"></div>
 <div id="status"></div>
 <div id="list"></div>
