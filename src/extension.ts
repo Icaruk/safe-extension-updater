@@ -23,7 +23,8 @@ function numberSetting(configuration: vscode.WorkspaceConfiguration, key: string
 
 /**
  * Development-only sample rows covering every UI case (F5 launch):
- * plain update, downgrade, active malware finding, recent + past vulns.
+ * plain update, updated-this-session, downgrade, active malware finding,
+ * recent + past vulns, installed-version vuln ("Must update").
  * Ids are fake on purpose: clicking Update on them fails harmlessly.
  */
 function mockUpdates(): readonly PendingUpdate[] {
@@ -34,6 +35,13 @@ function mockUpdates(): readonly PendingUpdate[] {
       displayName: 'React checker',
       installedVersion: '1.0.0',
       availableVersion: '1.2.0',
+      releasedAt: hoursAgo(72),
+    },
+    {
+      id: 'sample.updated',
+      displayName: 'Svelte checker',
+      installedVersion: '3.0.0',
+      availableVersion: '3.1.0',
       releasedAt: hoursAgo(72),
     },
     {
@@ -156,6 +164,7 @@ export function activate(context: vscode.ExtensionContext): void {
         // F5 launch only: append the sample rows so every UI case is visible.
         if (context.extensionMode === vscode.ExtensionMode.Development) {
           cache = { ...cache, updates: [...cache.updates, ...mockUpdates()] }
+          waitingReload = [...new Set([...waitingReload, 'sample.updated'])]
         }
         queryError = undefined
       } catch (error) {
