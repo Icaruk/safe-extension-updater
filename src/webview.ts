@@ -7,6 +7,8 @@ import { strings } from './strings.js'
 export interface UpdatesModel {
   /** current pending updates (cache contents) */
   readonly updates: readonly PendingUpdate[]
+  /** ids installed this session, waiting for a window reload to take effect */
+  readonly pendingReload: readonly string[]
   /** `extensionUpdater.earlyReleaseProtectionHours`, read live so config changes apply on refresh */
   readonly thresholdHours: number
 }
@@ -23,6 +25,8 @@ interface WebUpdate {
   readonly publisher: string
   readonly age: string
   readonly recent: boolean
+  /** installed this session; waiting for reload to take effect */
+  readonly updated: boolean
   readonly malicious?: readonly string[]
   readonly pastVulnsLabel?: string
   /** OSV ids affecting the installed version; the update fixes them */
@@ -126,6 +130,7 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
     if (!view) return
     const now = new Date()
     const autoUpdate = this.resolveAutoUpdate()
+    const waiting = new Set(this.model.pendingReload)
     const updates: WebUpdate[] = this.model.updates.map((update) => ({
       id: update.id,
       displayName: update.displayName,
@@ -137,6 +142,7 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
       publisher: update.id.split('.')[0] ?? '',
       age: relativeAge(update.releasedAt, now),
       recent: isRecentRelease(update.releasedAt, now, this.model.thresholdHours),
+      updated: waiting.has(update.id),
       malicious: update.malicious,
       pastVulnsLabel: update.pastVulns ? strings.pastVulns(update.pastVulns) : undefined,
       installedVulns: update.installedVulns,
@@ -145,6 +151,8 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
       type: 'state',
       updates,
       banner: this.resolveBanner(),
+      reloadBanner:
+        this.model.pendingReload.length > 0 ? strings.reloadBanner(this.model.pendingReload.length) : undefined,
       searching: this.searching,
       autoUpdate: autoUpdate.state,
       needsReload: autoUpdate.needsReload,
@@ -158,6 +166,8 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
         maliciousFindings: strings.maliciousFindings,
         maliciousButton: strings.maliciousButton,
         mustUpdate: strings.mustUpdateButton,
+        updated: strings.updatedButton,
+        reloadVscode: strings.reloadVscode,
         installedVulns: strings.installedVulns,
         fix: strings.fixAutoUpdate,
         reload: strings.reloadToTakeEffect,

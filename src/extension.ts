@@ -86,6 +86,8 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // In-memory cache: avoid re-querying the gallery on every view open.
   let cache: { fetchedAt: number; updates: readonly PendingUpdate[] } = { fetchedAt: 0, updates: [] }
+  /** ids installed this session; the running version only changes after reload */
+  let waitingReload: readonly string[] = []
   let refreshing: Promise<void> | undefined
   let queryError: string | undefined
   let timer: ReturnType<typeof setInterval> | undefined
@@ -93,6 +95,9 @@ export function activate(context: vscode.ExtensionContext): void {
   const model: UpdatesModel = {
     get updates() {
       return cache.updates
+    },
+    get pendingReload() {
+      return waitingReload
     },
     get thresholdHours() {
       return readConfig().thresholdHours
@@ -185,11 +190,11 @@ export function activate(context: vscode.ExtensionContext): void {
       try {
         const outcome = await updater.updateOne(update, readConfig().thresholdHours)
         if (outcome === 'updated') {
-          // No forced refresh here: until the window reloads, VS Code still
-          // reports the OLD running version, so a re-query would re-detect
-          // this same pending update. The row is dropped until the next
-          // scheduled/manual refresh after reload.
-          cache = { ...cache, updates: cache.updates.filter((entry) => entry.id !== update.id) }
+          // No forced refresh: until the window reloads, VS Code still reports
+          // the OLD running version, so a re-query would re-detect this same
+          // pending update. Mark the row Updated instead; it disappears on the
+          // first refresh after reload.
+          waitingReload = [...new Set([...waitingReload, update.id])]
         }
       } catch (error) {
         void vscode.window.showErrorMessage(strings.updateFailed(update.id, String(error)))
@@ -203,9 +208,12 @@ export function activate(context: vscode.ExtensionContext): void {
         return
       }
       try {
-        const result = await updater.updateAll(updates, readConfig().thresholdHours)
-        const updated = new Set(result.updatedIds)
-        cache = { ...cache, updates: cache.updates.filter((entry) => !updated.has(entry.id)) }
+        const skip = new Set(waitingReload)
+        const result = await updater.updateAll(
+          cache.updates.filter((entry) => !skip.has(entry.id)),
+          readConfig().thresholdHours,
+        )
+        waitingReload = [...new Set([...waitingReload, ...result.updatedIds])]
         if (result.failures.length > 0) {
           void vscode.window.showErrorMessage(strings.updateAllSummary(result.updatedIds.length, result.failures))
         }

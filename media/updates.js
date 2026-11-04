@@ -36,6 +36,17 @@ function render() {
 
   const banner = document.getElementById('banner')
   banner.textContent = ''
+  if (state.reloadBanner) {
+    const box = document.createElement('div')
+    box.className = 'banner reload'
+    box.textContent = state.reloadBanner + ' '
+    const reloadButton = document.createElement('button')
+    reloadButton.className = 'reload'
+    reloadButton.textContent = state.labels.reloadVscode
+    reloadButton.addEventListener('click', () => vscode.postMessage({ type: 'reload' }))
+    box.appendChild(reloadButton)
+    banner.appendChild(box)
+  }
   if (state.banner) {
     const box = document.createElement('div')
     box.className = 'banner'
@@ -147,16 +158,18 @@ function row(update) {
   }
   rowEl.appendChild(main)
 
-  const button = document.createElement('button')
-  if (update.malicious?.length) {
-    button.className = 'malware'
-    button.textContent = state.labels.maliciousButton
-    button.disabled = true
-  } else {
-    button.className = update.installedVulns?.length ? 'must' : update.recent ? 'soon' : ''
-    button.textContent = update.installedVulns?.length ? state.labels.mustUpdate : state.labels.update
-    button.addEventListener('click', () => vscode.postMessage({ type: 'update', update }))
+  if (update.malicious?.length || update.updated) {
+    const tag = document.createElement('span')
+    tag.className = `tag ${update.updated ? 'updated' : 'malware'}`
+    tag.textContent = update.updated ? state.labels.updated : state.labels.maliciousButton
+    rowEl.appendChild(tag)
+    return rowEl
   }
+
+  const button = document.createElement('button')
+  button.className = update.installedVulns?.length ? 'must' : update.recent ? 'soon' : ''
+  button.textContent = update.installedVulns?.length ? state.labels.mustUpdate : state.labels.update
+  button.addEventListener('click', () => vscode.postMessage({ type: 'update', update }))
   rowEl.appendChild(button)
   return rowEl
 }

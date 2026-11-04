@@ -7,6 +7,10 @@ export const strings = {
   upToDate: 'No pending updates.',
   updateButton: 'Update',
   mustUpdateButton: 'Must update',
+  updatedButton: 'Updated',
+  reloadBanner: (count: number): string =>
+    `${count} ${count === 1 ? 'update' : 'updates'} installed. Reload VS Code to take effect.`,
+  reloadVscode: 'Reload VS Code',
   maliciousButton: 'Malware',
   checkUpdatesLabel: 'Check for updates',
   maliciousFindings: '⚠ Malicious code (OSV):',
