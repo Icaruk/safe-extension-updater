@@ -110,7 +110,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "test": "tsx --test test/*.test.ts",
-    "package": "vsce package --no-dependencies -o build/extension-updater-$npm_package_version.vsix"
+    "package": "vsce package --no-dependencies -o build/"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
