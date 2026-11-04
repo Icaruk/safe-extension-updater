@@ -2,10 +2,15 @@
 
 Extensiones de VS Code: solo tocar `src/`, `media/`, `test/` y los archivos de configuración. `out/` se genera con `npx tsc -p ./`; `build/*.vsix` son artefactos.
 
+## Código
+
+- Comentarios en **inglés**.
+- Variables, funciones y todo identificador en **inglés**.
+
 ## Changelog
 
-- En **españ**, orientado al **usuario final**: nada técnico (sin nombres de variables, archivos ni terminología interna) y solo cambios que le aporten valor.
-- Secciones: `### Corregido`, `### Mejorado`, `### Añadido` (solo las que apliquen).
+- En **inglés**, orientado al **usuario final**: nada técnico (sin nombres de variables, archivos ni terminología interna) y solo cambios que le aporten valor.
+- Sections: `### Fixed`, `### Improved`, `### Added` (only the ones that apply).
 - El texto de la UI va entre comillas tal como se muestra ("Updated", "Updating…").
 - Entrada nueva arriba con el formato `## [X.Y.Z] - YYYY-MM-DD`.
 

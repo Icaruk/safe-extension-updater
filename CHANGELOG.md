@@ -7,14 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.2.1] - 2026-11-04
 
-### Corregido
+### Fixed
 
-- La marca "Updated" y el aviso para recargar ya no desaparecen al actualizar la propia extensión.
+- The "Updated" mark and the reload banner no longer disappear when you update this extension itself.
 
-### Mejorado
+### Improved
 
-- Mientras se instala una actualización, su fila muestra "Updating…" en lugar del botón Update.
-- "No pending updates." ahora aparece centrado con un check verde, igual que el estado de auto-update.
+- While an update is being installed, its row shows "Updating…" instead of the Update button.
+- "No pending updates." is now centered with a green check, matching the auto-update status above it.
 
 ## [1.2.0] - 2026-11-04
 
