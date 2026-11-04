@@ -7,7 +7,8 @@ is compromised, a malicious release reaches every machine within the hour.
 This extension lists every pending update with its release age, flags very
 recent releases, and checks each one against the OSV vulnerability database.
 
-<!-- TODO: add screenshot here -->
+<img width="464" height="609" alt="image" src="https://github.com/user-attachments/assets/072eaf9d-000e-41ff-bcf8-e9eddf1c4d77" />
+
 
 ## Features
 
