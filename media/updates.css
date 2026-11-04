@@ -6,7 +6,7 @@ body { padding: 8px 12px; font-family: var(--vscode-font-family); font-size: var
 #auto-update:not(.centered) .auto-update svg { color: var(--vscode-charts-red); }
 #auto-update button { flex: none; }
 .banner { margin: 0 0 8px; padding: 6px 10px; border: 1px solid var(--vscode-editorWarning-foreground); color: var(--vscode-editorWarning-foreground); border-radius: 3px; }
-#reload-banner .banner { margin: 0 0 8px; }
+#reload-banner .banner { margin: 0 0 8px; background-color: rgba(0, 242, 0, 0.03); }
 .status { color: var(--vscode-descriptionForeground); padding: 4px 0; }
 .empty { color: var(--vscode-descriptionForeground); padding: 12px 0; }
 .row { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-radius: 4px; }
@@ -34,10 +34,9 @@ button { box-sizing: border-box; flex: 1 1 calc(50% - 4px); min-width: 130px; pa
 button:hover { background: var(--vscode-button-hoverBackground); }
 button.soon { filter: brightness(0.55); }
 button.soon:hover { filter: none; }
-button.malware { background: var(--vscode-errorForeground); color: var(--vscode-button-foreground); opacity: 0.8; cursor: default; }
-button.must { background: var(--vscode-charts-yellow, #e0b64d); color: var(--vscode-button-foreground); }
-button.must:hover { background: var(--vscode-editorWarning-foreground); }
-.tag { flex: none; min-width: 0; padding: 4px 8px; border-radius: 10px; font-size: 0.9em; font-weight: 600; }
+button.must { background: var(--vscode-charts-yellow, #e0b64d); color: rgb(20, 20, 20); font-weight: bold; }
+button.must:hover { filter: brightness(0.85); }
+.tag { flex: none; min-width: 0; padding: 4px 8px; border-radius: 10px; font-size: 0.9em; font-weight: bold; }
 .tag.updated { border: 1px solid var(--vscode-charts-green); color: var(--vscode-charts-green); }
 .tag.malware { border: 1px solid var(--vscode-errorForeground); color: var(--vscode-errorForeground); }
 .banner.reload { border-color: var(--vscode-charts-green); color: var(--vscode-foreground); display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
