@@ -117,8 +117,7 @@
     "@types/vscode": "^1.85.0",
     "@vscode/vsce": "^3.1.0",
     "tsx": "^4.19.0",
-    "typescript": "^5.6.0",
-    "vsce": "^2.15.0"
+    "typescript": "^5.6.0"
   },
   "packageManager": "pnpm@12.16.1"
 }

@@ -8,31 +8,8 @@ import {
   type PickContext,
 } from './core/release.js';
 import type { ExtensionGalleryClient, PendingUpdate } from './gallery/types.js';
-import { asString, isRecord } from './core/narrow.js';
+import { manifestToInstalled } from './core/manifest.js';
 import { strings } from './strings.js';
-
-/** Subset of the manifest this extension cares about; everything stays `unknown` until narrowed. */
-interface Manifest {
-  readonly publisher: unknown;
-  readonly name: unknown;
-  readonly version: unknown;
-  readonly displayName: unknown;
-  readonly preRelease: unknown;
-  readonly isBuiltin: unknown;
-}
-
-function readManifest(ext: vscode.Extension<unknown>): Manifest | undefined {
-  const raw: unknown = ext.packageJSON; // typed `any` by the VS Code API; treated as unknown
-  if (!isRecord(raw)) return undefined;
-  return {
-    publisher: raw['publisher'],
-    name: raw['name'],
-    version: raw['version'],
-    displayName: raw['displayName'],
-    preRelease: raw['preRelease'],
-    isBuiltin: raw['isBuiltin'],
-  };
-}
 
 export type UpdateAllResult = {
   readonly updatedIds: readonly string[];
@@ -77,28 +54,11 @@ export class Updater {
   private collectInstalled(): (InstalledExtension & { readonly manifestPreRelease: unknown })[] {
     const installed: (InstalledExtension & { readonly manifestPreRelease: unknown })[] = [];
     for (const ext of vscode.extensions.all) {
-      const manifest = readManifest(ext);
-      if (!manifest || this.isBuiltin(ext, manifest)) continue;
-      const publisher = asString(manifest.publisher);
-      const name = asString(manifest.name);
-      const version = asString(manifest.version);
-      if (!publisher || !name || !version) continue;
-      // VS Code ids are case-insensitive; the marketplace answers lowercase
-      // (e.g. manifest "Anthropic.claude-code" → gallery "anthropic.claude-code").
-      installed.push({
-        id: `${publisher}.${name}`.toLowerCase(),
-        displayName: asString(manifest.displayName) ?? name,
-        version,
-        prerelease: false,
-        manifestPreRelease: manifest.preRelease,
-      });
+      const appRoot = vscode.Uri.file(vscode.env.appRoot).fsPath;
+      const entry = manifestToInstalled(ext.packageJSON, ext.extensionUri.fsPath.startsWith(appRoot));
+      if (entry) installed.push(entry);
     }
     return installed;
-  }
-
-  private isBuiltin(ext: vscode.Extension<unknown>, manifest: Manifest): boolean {
-    if (manifest.isBuiltin === true) return true;
-    return ext.extensionUri.fsPath.startsWith(vscode.Uri.file(vscode.env.appRoot).fsPath);
   }
 
   /** Install one update, warning first when its release is recent. */

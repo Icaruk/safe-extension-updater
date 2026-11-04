@@ -13,10 +13,6 @@ export function autoUpdateState(value: unknown): AutoUpdateState {
   return 'enabled'; // true, 'on', undefined (default 'on')
 }
 
-export function isAutoUpdateActive(value: unknown): boolean {
-  return autoUpdateState(value) !== 'disabled';
-}
-
 /**
  * VS Code keeps per-extension/per-publisher auto-update opt-ins (made while
  * the global setting is off) in internal storage the API cannot read

@@ -69,14 +69,6 @@ export function compareVersions(a: string, b: string): number {
   return compareSemver(pa, pb);
 }
 
-function versionGreaterOrEqual(host: SemVer, base: SemVer): boolean {
-  return compareSemver(host, base) >= 0;
-}
-
-function versionGreaterThan(host: SemVer, base: SemVer): boolean {
-  return compareSemver(host, base) > 0;
-}
-
 /**
  * Check a marketplace `engines.vscode` value (e.g. "^1.95.0", ">=1.80.0", "*", "1.85.0")
  * against a concrete host version. Unknown engines or unparseable host versions are
@@ -94,29 +86,29 @@ export function isEngineCompatible(engine: string, hostVersion: string): boolean
   if (!base) return true;
   switch (operator) {
     case '>=':
-      return versionGreaterOrEqual(host, base);
+      return compareSemver(host, base) >= 0;
     case '>':
-      return versionGreaterThan(host, base);
+      return compareSemver(host, base) > 0;
     case '<=':
-      return !versionGreaterThan(host, base);
+      return compareSemver(host, base) <= 0;
     case '<':
       return compareSemver(host, base) < 0;
     case '~':
-      return host.major === base.major && host.minor === base.minor && versionGreaterOrEqual(host, base);
+      return host.major === base.major && host.minor === base.minor && compareSemver(host, base) >= 0;
     case '^': {
       // npm caret semantics, including the 0.x special cases.
       if (base.major === 0 && base.minor === 0) {
-        return host.major === 0 && host.minor === 0 && host.patch === base.patch && versionGreaterOrEqual(host, base);
+        return host.major === 0 && host.minor === 0 && host.patch === base.patch && compareSemver(host, base) >= 0;
       }
       if (base.major === 0) {
         // VS Code semantics (extensionValidator.ts): "^0.x engines predate the 1.0
         // engine contract; anything < 1.0.0 runs on any 1.x host, but not on 2.x".
         if (host.major === 0) {
-          return host.minor === base.minor && versionGreaterOrEqual(host, base);
+          return host.minor === base.minor && compareSemver(host, base) >= 0;
         }
         return host.major === 1;
       }
-      return host.major === base.major && versionGreaterOrEqual(host, base);
+      return host.major === base.major && compareSemver(host, base) >= 0;
     }
     case '=':
       return host.major === base.major && host.minor === base.minor && host.patch === base.patch;

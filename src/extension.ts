@@ -7,13 +7,7 @@ import { strings } from './strings.js';
 import { asPendingUpdate, UpdatesWebviewProvider, type UpdatesModel } from './webview.js';
 import { Updater } from './updater.js';
 
-interface Config {
-  readonly thresholdHours: number;
-  readonly refreshIntervalHours: number;
-  readonly gallery: GallerySetting;
-}
-
-function readConfig(): Config {
+function readConfig() {
   const configuration = vscode.workspace.getConfiguration('extensionUpdater');
   const threshold = numberSetting(configuration, 'earlyReleaseProtectionHours', 24);
   const interval = numberSetting(configuration, 'refreshIntervalHours', 2);

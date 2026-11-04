@@ -9,6 +9,7 @@
  *   2.1.313 backdoor) are NOT covered by OSV.
  */
 import { fetchJson } from './http.js';
+import { asString, isRecord } from '../core/narrow.js';
 
 const OSV_BATCH_URL = 'https://api.osv.dev/v1/querybatch';
 const TIMEOUT_MS = 10_000;
@@ -26,12 +27,12 @@ export function parseOsvBatch(payload: unknown): (readonly string[] | undefined)
   const results = (payload as Record<string, unknown>)['results'];
   if (!Array.isArray(results)) return [];
   return results.map((entry) => {
-    if (typeof entry !== 'object' || entry === null) return undefined;
-    const vulns = (entry as Record<string, unknown>)['vulns'];
+    if (!isRecord(entry)) return undefined;
+    const vulns = entry['vulns'];
     if (!Array.isArray(vulns)) return undefined;
     const ids = vulns
-      .map((vuln) => (typeof vuln === 'object' && vuln !== null ? (vuln as Record<string, unknown>)['id'] : undefined))
-      .filter((id): id is string => typeof id === 'string');
+      .map((vuln) => (isRecord(vuln) ? asString(vuln['id']) : undefined))
+      .filter((id): id is string => id !== undefined);
     return ids.length > 0 ? ids : undefined;
   });
 }
