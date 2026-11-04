@@ -4,7 +4,7 @@ Review extension updates **before** installing them.
 
 Extension updates are a **supply chain attack vector**: a compromised publisher can push a malicious release that auto-update installs on every machine.
 
-<img height="600" alt="image" src="https://github.com/user-attachments/assets/5344036e-c7b1-4f82-ac17-1e2b0a1413c8" />
+<img height="600" alt="image" src="https://github.com/user-attachments/assets/98265ec7-ea09-42e0-9546-0d9e434a9b8f" />
 
 
 ## Features
