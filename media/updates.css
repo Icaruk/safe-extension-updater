@@ -1,0 +1,35 @@
+body { padding: 8px 12px; font-family: var(--vscode-font-family); font-size: var(--vscode-font-size); color: var(--vscode-foreground); }
+#auto-update { display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 4px; margin-bottom: 24px; }
+.auto-update { display: inline-flex; align-items: center; gap: 6px; color: var(--vscode-descriptionForeground); }
+.auto-update svg { fill: currentColor; flex: none; }
+#auto-update.centered .auto-update svg { color: var(--vscode-charts-green); }
+#auto-update:not(.centered) .auto-update svg { color: var(--vscode-charts-red); }
+#auto-update button { flex: none; }
+.banner { margin: 0 0 8px; padding: 6px 10px; border: 1px solid var(--vscode-editorWarning-foreground); color: var(--vscode-editorWarning-foreground); border-radius: 3px; }
+.status { color: var(--vscode-descriptionForeground); padding: 4px 0; }
+.empty { color: var(--vscode-descriptionForeground); padding: 12px 0; }
+.row { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-radius: 4px; }
+.row:not(:last-child) { border-bottom: 1px solid var(--vscode-panel-border); }
+.row:hover { background: var(--vscode-list-hoverBackground); }
+.icon { width: 28px; height: 28px; border-radius: 4px; flex: none; object-fit: contain; }
+.icon.fallback { display: flex; align-items: center; justify-content: center; background: var(--vscode-badge-background); color: var(--vscode-badge-foreground); font-weight: 600; }
+.main { flex: 1; min-width: 0; }
+.name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.main .age, .main .line2 { margin-top: 2px; }
+.age { font-size: 0.9em; color: var(--vscode-descriptionForeground); }
+.age.recent { color: var(--vscode-errorForeground); font-weight: 600; }
+.line2 { color: var(--vscode-descriptionForeground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.findings { color: var(--vscode-errorForeground); font-weight: 600; margin-top: 3px; }
+.findings a { color: inherit; }
+.past-vulns { color: var(--vscode-editorWarning-foreground); font-size: 0.9em; margin-top: 8px; }
+#actions-group { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 12px 0; border-top: 1px solid var(--vscode-panel-border); }
+#pending-title { text-align: center; padding: 10px 0; color: var(--vscode-descriptionForeground); }
+#list { border-top: 1px solid var(--vscode-panel-border); }
+button { box-sizing: border-box; flex: 1 1 calc(50% - 4px); min-width: 130px; padding: 4px 10px; border: none; border-radius: 2px; cursor: pointer;
+  background: var(--vscode-button-background); color: var(--vscode-button-foreground);
+  font-family: inherit; font-size: 0.9em; }
+button:hover { background: var(--vscode-button-hoverBackground); }
+button.soon { filter: brightness(0.55); }
+button.soon:hover { filter: none; }
+button.malware { background: var(--vscode-errorForeground); color: var(--vscode-button-foreground); opacity: 0.8; cursor: default; }
+.row button { flex: none; min-width: 0; padding: 4px 8px; }
