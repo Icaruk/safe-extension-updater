@@ -25,6 +25,8 @@ interface WebUpdate {
   readonly recent: boolean;
   readonly malicious?: readonly string[];
   readonly pastVulnsLabel?: string;
+  /** OSV ids affecting the installed version; the update fixes them */
+  readonly installedVulns?: readonly string[];
 }
 
 /** Runtime narrow for update objects round-tripping through the webview as unknown. */
@@ -137,6 +139,7 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
       recent: isRecentRelease(update.releasedAt, now, this.model.thresholdHours),
       malicious: update.malicious,
       pastVulnsLabel: update.pastVulns ? strings.pastVulns(update.pastVulns) : undefined,
+      installedVulns: update.installedVulns,
     }));
     void view.webview.postMessage({
       type: 'state',
@@ -154,6 +157,8 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
         pendingUpdates: strings.pendingUpdates,
         maliciousFindings: strings.maliciousFindings,
         maliciousButton: strings.maliciousButton,
+        mustUpdate: strings.mustUpdateButton,
+        installedVulns: strings.installedVulns,
         fix: strings.fixAutoUpdate,
         reload: strings.reloadToTakeEffect,
         autoUpdateText: {

@@ -119,6 +119,19 @@ function row(update) {
     past.textContent = update.pastVulnsLabel;
     main.appendChild(past);
   }
+  if (update.installedVulns?.length) {
+    const installed = document.createElement('div');
+    installed.className = 'installed-vulns';
+    installed.append(state.labels.installedVulns + ' ');
+    update.installedVulns.forEach((osvId, index) => {
+      if (index > 0) installed.append(', ');
+      const link = document.createElement('a');
+      link.href = 'https://osv.dev/vulnerability/' + osvId;
+      link.textContent = osvId;
+      installed.append(link);
+    });
+    main.appendChild(installed);
+  }
   if (update.malicious?.length) {
     const findings = document.createElement('div');
     findings.className = 'findings';
@@ -140,8 +153,8 @@ function row(update) {
     button.textContent = state.labels.maliciousButton;
     button.disabled = true;
   } else {
-    button.className = update.recent ? 'soon' : '';
-    button.textContent = state.labels.update;
+    button.className = update.installedVulns?.length ? 'must' : update.recent ? 'soon' : '';
+    button.textContent = update.installedVulns?.length ? state.labels.mustUpdate : state.labels.update;
     button.addEventListener('click', () => vscode.postMessage({ type: 'update', update }));
   }
   rowEl.appendChild(button);

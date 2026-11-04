@@ -86,3 +86,18 @@ export async function fetchOsvReport(
   ]);
   return buildOsvReport(ids, all, active);
 }
+
+/** Active entries for one version map (e.g. INSTALLED versions): these say "must update". */
+export async function fetchOsvActive(
+  ids: readonly string[],
+  versions: ReadonlyMap<string, string>,
+  userAgent: string,
+): Promise<ReadonlyMap<string, readonly string[]>> {
+  if (ids.length === 0) return new Map();
+  const active = await queryBatch(
+    ids.map((id) => ({ package: { name: id, ecosystem: 'VSCode' }, version: versions.get(id) })),
+    userAgent,
+  );
+  return buildOsvReport(ids, active, active).active;
+}
+

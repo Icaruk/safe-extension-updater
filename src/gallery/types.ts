@@ -33,6 +33,8 @@ export interface PendingUpdate {
   readonly malicious?: readonly string[];
   /** OSV entries filed for this extension that do not affect the available version */
   readonly pastVulns?: number;
+  /** OSV ids affecting the INSTALLED version: the update fixes these, install it now */
+  readonly installedVulns?: readonly string[];
 }
 
 export interface ExtensionGalleryClient {

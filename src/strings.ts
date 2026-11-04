@@ -6,11 +6,13 @@ export const strings = {
   searching: 'Checking for updates…',
   upToDate: 'No pending updates.',
   updateButton: 'Update',
+  mustUpdateButton: 'Must update',
   maliciousButton: 'Malware',
   checkUpdatesLabel: 'Check for updates',
   maliciousFindings: '⚠ Malicious code (OSV):',
   pastVulns: (count: number): string =>
     `${count} past ${count === 1 ? 'vulnerability' : 'vulnerabilities'} found.`,
+  installedVulns: '⚠ Installed version affected (OSV):',
   queryError: (detail: string): string => `Failed to query the extension gallery: ${detail}`,
   autoUpdateWarning:
     'Native VS Code auto-update is active and may update extensions before you review them. Turn it off?',

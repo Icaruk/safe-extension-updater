@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { AutoUpdateGuard } from './autoUpdate.js';
 import { resolveGallery, type GallerySetting } from './gallery/select.js';
-import { fetchOsvReport } from './gallery/osv.js';
+import { fetchOsvActive, fetchOsvReport } from './gallery/osv.js';
 import type { PendingUpdate } from './gallery/types.js';
 import { strings } from './strings.js';
 import { asPendingUpdate, UpdatesWebviewProvider, type UpdatesModel } from './webview.js';
@@ -29,11 +29,12 @@ function numberSetting(configuration: vscode.WorkspaceConfiguration, key: string
 function mockUpdates(): readonly PendingUpdate[] {
   const hoursAgo = (hours: number): string => new Date(Date.now() - hours * 3_600_000).toISOString();
   return [
-    { id: 'sample.plain-update', displayName: 'Astro linter', installedVersion: '1.0.0', availableVersion: '1.2.0', releasedAt: hoursAgo(72) },
-    { id: 'sample.plain-update-with-past-vulns', displayName: 'React checker', installedVersion: '1.0.0', availableVersion: '1.2.0', releasedAt: hoursAgo(72), pastVulns: 1},
-    { id: 'sample.downgrade-demo', displayName: 'Table viewer', installedVersion: '2.5.0', availableVersion: '3.1.0', releasedAt: hoursAgo(120) },
-    { id: 'sample.malware-demo', displayName: 'Icon generator', installedVersion: '1.4.0', availableVersion: '1.5.0', releasedAt: hoursAgo(24 * 30), malicious: ['MAL-DEMO-0001'], pastVulns: 3 },
-    { id: 'sample.recent-demo', displayName: 'Spell checker', installedVersion: '0.9.0', availableVersion: '1.0.0', releasedAt: hoursAgo(8), pastVulns: 2 },
+    { id: 'sample.demo', displayName: 'React checker', installedVersion: '1.0.0', availableVersion: '1.2.0', releasedAt: hoursAgo(72) },
+    { id: 'sample.demo', displayName: 'DB manager', installedVersion: '0.5.0', availableVersion: '0.6.0', releasedAt: hoursAgo(72), pastVulns: 1 },
+    { id: 'sample.demo', displayName: 'CSS shrinker', installedVersion: '0.9.0', availableVersion: '1.0.0', releasedAt: hoursAgo(8), pastVulns: 0 },
+    { id: 'sample.demo', displayName: 'Astro linter', installedVersion: '2.1.0', availableVersion: '2.2.0', releasedAt: hoursAgo(8), pastVulns: 3 },
+    { id: 'sample.demo', displayName: 'Icon generator', installedVersion: '1.4.0', availableVersion: '1.5.0', releasedAt: hoursAgo(1), malicious: ['MAL-DEMO-0001'], pastVulns: 3 },
+    { id: 'sample.demo', displayName: 'JSON tools', installedVersion: '0.8.0', availableVersion: '0.9.0', releasedAt: hoursAgo(30), installedVulns: ['MAL-DEMO-0002'] },
   ];
 }
 
@@ -92,18 +93,29 @@ export function activate(context: vscode.ExtensionContext): void {
       webview.setSearching(true);
       try {
         const updates = await updater.collectPending();
-        // OSV malicious-package check, fail-open: a lookup error must not hide updates.
-        const report = await fetchOsvReport(
-          updates.map((update) => update.id),
-          new Map(updates.map((update) => [update.id, update.availableVersion])),
-          userAgent,
-        ).catch(() => ({ active: new Map(), pastCount: new Map() }));
+        // OSV checks, fail-open: a lookup error must not hide updates.
+        // - available version → malware/past findings
+        // - installed version → active vulns the update fixes ("Must update")
+        const ids = updates.map((update) => update.id);
+        const [report, installedVulns] = await Promise.all([
+          fetchOsvReport(
+            ids,
+            new Map(updates.map((update) => [update.id, update.availableVersion])),
+            userAgent,
+          ).catch(() => ({ active: new Map(), pastCount: new Map() })),
+          fetchOsvActive(
+            ids,
+            new Map(updates.map((update) => [update.id, update.installedVersion])),
+            userAgent,
+          ).catch(() => new Map()),
+        ]);
         cache = {
           fetchedAt: Date.now(),
           updates: updates.map((update) => ({
             ...update,
             malicious: report.active.get(update.id),
             pastVulns: report.pastCount.get(update.id),
+            installedVulns: installedVulns.get(update.id),
           })),
         };
         // F5 launch only: append the sample rows so every UI case is visible.
