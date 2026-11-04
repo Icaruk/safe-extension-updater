@@ -37,8 +37,8 @@ button.malware { background: var(--vscode-errorForeground); color: var(--vscode-
 button.must { background: var(--vscode-charts-yellow, #e0b64d); color: var(--vscode-button-foreground); }
 button.must:hover { background: var(--vscode-editorWarning-foreground); }
 .tag { flex: none; min-width: 0; padding: 4px 8px; border-radius: 10px; font-size: 0.9em; font-weight: 600; }
-.tag.updated { background: color-mix(in srgb, var(--vscode-charts-green) 25%, transparent); color: var(--vscode-charts-green); }
-.tag.malware { background: color-mix(in srgb, var(--vscode-errorForeground) 20%, transparent); color: var(--vscode-errorForeground); }
+.tag.updated { border: 1px solid var(--vscode-charts-green); color: var(--vscode-charts-green); }
+.tag.malware { border: 1px solid var(--vscode-errorForeground); color: var(--vscode-errorForeground); }
 .banner.reload { border-color: var(--vscode-charts-green); color: var(--vscode-foreground); }
 .banner.reload button { flex: none; margin-left: 8px; }
 .row button { flex: none; min-width: 0; padding: 4px 8px; }
