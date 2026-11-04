@@ -2,29 +2,18 @@
 
 Review extension updates **before** installing them.
 
-VS Code can auto-update extensions in the background. If a publisher account
-is compromised, a malicious release reaches every machine within the hour.
-This extension lists every pending update with its release age, flags very
-recent releases, and checks each one against the OSV vulnerability database.
+Extension updates are a **supply chain attack vector**: a compromised publisher can push a malicious release that auto-update installs on every machine.
 
 <img width="464" height="609" alt="image" src="https://github.com/user-attachments/assets/072eaf9d-000e-41ff-bcf8-e9eddf1c4d77" />
 
-
 ## Features
 
-- Activity Bar view listing every installed extension with an available
-  update: `installed → available`, publisher and release age.
-- Releases younger than the configured threshold (default 24 h) are flagged
-  in red and skipped by bulk updates.
-- Each update is checked against [OSV.dev](https://osv.dev): known malicious
-  packages are blocked with a red warning, past (non-affecting) advisories
-  are shown as a muted note.
-- `Update` per row and `Update all safely` (only updates releases older than
-  the threshold, no confirmation dialogs).
-- Native auto-update status section: detects when `extensions.autoUpdate` is
-  on (or when a single extension opted in) and offers a one-click fix.
-- Works against the Visual Studio Marketplace and Open VSX (auto-detected on
-  forks like VSCodium, Cursor or Windsurf).
+- Lists every pending update.
+- Very recent releases (default < 24 h) are flagged red and skipped by bulk updates.
+- Every update is checked against [OSV.dev](https://osv.dev), so **known malicious packages are blocked**.
+- `Update all safely`: updates only releases older than the configured threshold and never OSV-flagged malicious ones.
+- Detects when single extension auto-update is on, and fixes it in one click.
+- Visual Studio Marketplace and Open VSX, auto-detected.
 
 ## Extension settings
 
@@ -46,8 +35,7 @@ npm run compile
 npm test
 ```
 
-Press **F5** to launch an Extension Development Host. Package with
-`npx vsce package`.
+Press **F5** to launch an Extension Development Host. Package with `npx vsce package`.
 
 ## License
 
