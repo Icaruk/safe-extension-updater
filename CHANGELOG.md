@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Extensions removed from the Marketplace for malware or impersonation now appear in a red "Removed from the Marketplace" section, with the removal date and reason, and an **Uninstall** button.
+- Updates from extensions whose source repository is private, deleted, or not declared show a yellow warning line.
+
+### Improved
+
+- Extensions that bundle their dependencies are checked against a security database: vulnerable bundled packages show a red warning line next to the update.
+
 ## [1.2.1] - 2026-11-04
 
 ### Fixed

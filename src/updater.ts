@@ -33,7 +33,7 @@ export class Updater {
   /** Scan installed extensions and resolve every pending update against the gallery. */
   async collectPending(): Promise<readonly PendingUpdate[]> {
     const now = new Date()
-    const installed = this.collectInstalled()
+    const installed = this.installed()
     if (installed.length === 0) return []
 
     const galleryList = await this.getGallery().query(installed.map((ext) => ext.id))
@@ -51,12 +51,16 @@ export class Updater {
     return pending
   }
 
-  private collectInstalled(): (InstalledExtension & { readonly manifestPreRelease: unknown })[] {
-    const installed: (InstalledExtension & { readonly manifestPreRelease: unknown })[] = []
+  /** Installed extensions (narrowed manifests), for security checks outside the update flow. */
+  installed(): (InstalledExtension & { readonly manifestPreRelease: unknown; readonly extensionPath: string })[] {
+    const installed: (InstalledExtension & {
+      readonly manifestPreRelease: unknown
+      readonly extensionPath: string
+    })[] = []
     for (const ext of vscode.extensions.all) {
       const appRoot = vscode.Uri.file(vscode.env.appRoot).fsPath
       const entry = manifestToInstalled(ext.packageJSON, ext.extensionUri.fsPath.startsWith(appRoot))
-      if (entry) installed.push(entry)
+      if (entry) installed.push({ ...entry, extensionPath: ext.extensionUri.fsPath })
     }
     return installed
   }

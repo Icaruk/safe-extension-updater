@@ -24,5 +24,6 @@ export function manifestToInstalled(
     version,
     prerelease: false,
     manifestPreRelease: raw['preRelease'],
+    repository: raw['repository'],
   }
 }

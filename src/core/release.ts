@@ -10,6 +10,8 @@ export interface InstalledExtension {
   readonly displayName: string
   readonly version: string
   readonly prerelease: boolean
+  /** raw manifest `repository` field, narrowed later by repoReference */
+  readonly repository?: unknown
 }
 
 export interface PickContext {

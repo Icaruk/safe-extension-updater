@@ -24,8 +24,12 @@ body { padding: 8px 12px; font-family: var(--vscode-font-family); font-size: var
 .findings { color: var(--vscode-errorForeground); font-weight: 600; margin-top: 3px; }
 .findings a { color: inherit; }
 .past-vulns { color: var(--vscode-editorWarning-foreground); font-size: 0.9em; margin-top: 8px; }
+.repo-warning { color: var(--vscode-editorWarning-foreground); font-size: 0.9em; margin-top: 3px; }
+.removed-title { text-align: center; padding: 10px 0 2px; color: var(--vscode-errorForeground); font-weight: 600; }
+.removed-reason { white-space: normal; }
 .installed-vulns { color: var(--vscode-editorWarning-foreground); font-weight: 600; margin-top: 3px; }
 .installed-vulns a { color: inherit; }
+.dep-vulns { color: var(--vscode-errorForeground); font-weight: 600; margin-top: 3px; }
 #actions-group { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 12px 0; border-top: 1px solid var(--vscode-panel-border); }
 #pending-title { text-align: center; padding: 10px 0; color: var(--vscode-descriptionForeground); }
 #list { border-top: 1px solid var(--vscode-panel-border); }

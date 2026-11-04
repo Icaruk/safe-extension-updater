@@ -35,6 +35,8 @@ export interface PendingUpdate {
   readonly pastVulns?: number
   /** OSV ids affecting the INSTALLED version: the update fixes these, install it now */
   readonly installedVulns?: readonly string[]
+  /** OSV findings in the bundled npm dependencies of the installed extension */
+  readonly depVulns?: readonly { readonly name: string; readonly version: string; readonly ids: readonly string[] }[]
 }
 
 export interface ExtensionGalleryClient {

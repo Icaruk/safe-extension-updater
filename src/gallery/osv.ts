@@ -15,6 +15,9 @@ import { fetchJson } from './http.js'
 const OSV_BATCH_URL = 'https://api.osv.dev/v1/querybatch'
 const TIMEOUT_MS = 10_000
 
+/** Ecosystems we query: `VSCode` for the extension itself, `npm` for bundled dependencies. */
+export type OsvEcosystem = 'VSCode' | 'npm'
+
 export interface OsvReport {
   /** entries affecting the candidate version, per extension id */
   readonly active: ReadonlyMap<string, readonly string[]>
@@ -70,6 +73,22 @@ async function queryBatch(queries: unknown, userAgent: string): Promise<(readonl
   return parseOsvBatch(body)
 }
 
+/**
+ * Active OSV entries for explicit name+version pairs; result array is
+ * parallel to the entries, undefined = no finding.
+ */
+export async function fetchOsvActiveEntries(
+  ecosystem: OsvEcosystem,
+  entries: readonly { readonly name: string; readonly version: string | undefined }[],
+  userAgent: string,
+): Promise<(readonly string[] | undefined)[]> {
+  if (entries.length === 0) return []
+  return queryBatch(
+    entries.map((entry) => ({ package: { name: entry.name, ecosystem }, version: entry.version })),
+    userAgent,
+  )
+}
+
 /** Two batch calls (all entries + version-filtered); missing ids stay out. */
 export async function fetchOsvReport(
   ids: readonly string[],
@@ -94,9 +113,9 @@ export async function fetchOsvActive(
   versions: ReadonlyMap<string, string>,
   userAgent: string,
 ): Promise<ReadonlyMap<string, readonly string[]>> {
-  if (ids.length === 0) return new Map()
-  const active = await queryBatch(
-    ids.map((id) => ({ package: { name: id, ecosystem: 'VSCode' }, version: versions.get(id) })),
+  const active = await fetchOsvActiveEntries(
+    'VSCode',
+    ids.map((id) => ({ name: id, version: versions.get(id) })),
     userAgent,
   )
   return buildOsvReport(ids, active, active).active

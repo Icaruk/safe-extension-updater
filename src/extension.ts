@@ -1,6 +1,9 @@
 import * as vscode from 'vscode'
 import { AutoUpdateGuard } from './autoUpdate.js'
-import { fetchOsvActive, fetchOsvReport } from './gallery/osv.js'
+import { collectDependencyVersions, type PinnedDependency } from './gallery/deps.js'
+import { fetchOsvActive, fetchOsvActiveEntries, fetchOsvReport } from './gallery/osv.js'
+import { fetchRemovedPackages, type RemovedEntry } from './gallery/removed.js'
+import { fetchRepoStatus, type RepoStatus, repoReference } from './gallery/repo.js'
 import { type GallerySetting, resolveGallery } from './gallery/select.js'
 import type { PendingUpdate } from './gallery/types.js'
 import { strings } from './strings.js'
@@ -84,8 +87,16 @@ function mockUpdates(): readonly PendingUpdate[] {
       availableVersion: '0.9.0',
       releasedAt: hoursAgo(30),
       installedVulns: ['MAL-DEMO-0002'],
+      depVulns: [{ name: 'demo-dep', version: '1.0.0', ids: ['MAL-DEMO-0003'] }],
     },
   ]
+}
+
+export interface RemovedRow {
+  readonly id: string
+  readonly displayName: string
+  readonly version: string
+  readonly entry: RemovedEntry
 }
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -93,7 +104,12 @@ export function activate(context: vscode.ExtensionContext): void {
   const userAgent = `extension-updater/${typeof manifestVersion === 'string' ? manifestVersion : '0.0.0'}`
 
   // In-memory cache: avoid re-querying the gallery on every view open.
-  let cache: { fetchedAt: number; updates: readonly PendingUpdate[] } = { fetchedAt: 0, updates: [] }
+  let cache: {
+    fetchedAt: number
+    updates: readonly PendingUpdate[]
+    removed: readonly RemovedRow[]
+    repoWarnings: ReadonlyMap<string, RepoStatus>
+  } = { fetchedAt: 0, updates: [], removed: [], repoWarnings: new Map() }
   /** ids installed this session; the running version only changes after reload.
    * Persisted: updating this extension itself restarts the extension host,
    * which would wipe in-memory state (and the Updated tag with it). */
@@ -120,6 +136,12 @@ export function activate(context: vscode.ExtensionContext): void {
     },
     get updatingId() {
       return updatingId
+    },
+    get removed() {
+      return cache.removed
+    },
+    get repoWarnings() {
+      return cache.repoWarnings
     },
   }
   /** View message priority: query errors only; auto-update state has its own view section. */
@@ -155,14 +177,55 @@ export function activate(context: vscode.ExtensionContext): void {
         // - available version → malware/past findings
         // - installed version → active vulns the update fixes ("Must update")
         const ids = updates.map((update) => update.id)
-        const [report, installedVulns] = await Promise.all([
+        const [report, installedVulns, removedList] = await Promise.all([
           fetchOsvReport(ids, new Map(updates.map((update) => [update.id, update.availableVersion])), userAgent).catch(
             () => ({ active: new Map(), pastCount: new Map() }),
           ),
           fetchOsvActive(ids, new Map(updates.map((update) => [update.id, update.installedVersion])), userAgent).catch(
             () => new Map(),
           ),
+          // Microsoft's removed-extensions list, fail-open as well.
+          fetchRemovedPackages(userAgent).catch(() => new Map<string, RemovedEntry>()),
         ])
+        const installed = updater.installed()
+        const removed: RemovedRow[] = []
+        for (const ext of installed) {
+          const entry = removedList.get(ext.id)
+          if (entry) removed.push({ id: ext.id, displayName: ext.displayName, version: ext.version, entry })
+        }
+        // Repository warnings for the listed updates, fail-open: one GitHub
+        // API probe per row (anonymous limit 60/h is enough for a view).
+        const repoBy = new Map(installed.map((ext) => [ext.id, repoReference(ext.repository)]))
+        const repoWarnings = new Map<string, RepoStatus>()
+        await Promise.all(
+          updates.map(async (update) => {
+            const status = await fetchRepoStatus(repoBy.get(update.id) ?? { kind: 'none' }, userAgent)
+            if (status) repoWarnings.set(update.id, status)
+          }),
+        )
+        // Bundled npm dependencies of the listed updates, checked against OSV
+        // (ecosystem npm). Only deps with an exact bundled version are queried;
+        // everything here is fail-open.
+        const depsByExt = new Map<string, Map<string, PinnedDependency>>()
+        await Promise.all(
+          updates.map(async (update) => {
+            const path = installed.find((ext) => ext.id === update.id)?.extensionPath
+            if (!path) return
+            try {
+              depsByExt.set(update.id, await collectDependencyVersions(path))
+            } catch {
+              // no readable package.json: nothing to check
+            }
+          }),
+        )
+        const depQueries = new Map<string, { name: string; version: string }>() // name@version
+        for (const deps of depsByExt.values()) {
+          for (const dep of deps.values()) depQueries.set(`${dep.name}@${dep.version}`, dep)
+        }
+        const depFindings = await fetchOsvActiveEntries('npm', [...depQueries.values()], userAgent).catch(
+          () => [] as (readonly string[] | undefined)[],
+        )
+        const activeDeps = new Map([...depQueries.keys()].map((key, index) => [key, depFindings[index] ?? []]))
         cache = {
           fetchedAt: Date.now(),
           updates: updates.map((update) => ({
@@ -170,7 +233,12 @@ export function activate(context: vscode.ExtensionContext): void {
             malicious: report.active.get(update.id),
             pastVulns: report.pastCount.get(update.id),
             installedVulns: installedVulns.get(update.id),
+            depVulns: [...(depsByExt.get(update.id) ?? new Map<string, PinnedDependency>()).values()]
+              .map((dep) => ({ ...dep, ids: activeDeps.get(`${dep.name}@${dep.version}`) ?? [] }))
+              .filter((dep) => dep.ids.length > 0),
           })),
+          removed,
+          repoWarnings,
         }
         // F5 launch only: append the sample rows so every UI case is visible.
         if (context.extensionMode === vscode.ExtensionMode.Development) {
@@ -226,6 +294,14 @@ export function activate(context: vscode.ExtensionContext): void {
       } finally {
         updatingId = undefined
         webview.invalidate()
+      }
+    }),
+    vscode.commands.registerCommand('extensionUpdater.uninstall', async (id: unknown) => {
+      if (typeof id !== 'string') return
+      try {
+        await vscode.commands.executeCommand('workbench.extensions.uninstallExtension', id)
+      } catch (error) {
+        void vscode.window.showErrorMessage(strings.uninstallFailed(id, String(error)))
       }
     }),
     vscode.commands.registerCommand('extensionUpdater.updateAll', async () => {

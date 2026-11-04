@@ -1,6 +1,8 @@
 import * as vscode from 'vscode'
 import { isRecord } from './core/narrow.js'
 import { isRecentRelease, relativeAge } from './core/release.js'
+import type { RemovedRow } from './extension.js'
+import type { RepoStatus } from './gallery/repo.js'
 import type { PendingUpdate } from './gallery/types.js'
 import { strings } from './strings.js'
 
@@ -13,6 +15,10 @@ export interface UpdatesModel {
   readonly thresholdHours: number
   /** id with an install in flight right now; shown as a grey "Updating…" tag */
   readonly updatingId: string | undefined
+  /** installed extensions on Microsoft's removed-packages list */
+  readonly removed: readonly RemovedRow[]
+  /** per-id repository warning for the listed updates */
+  readonly repoWarnings: ReadonlyMap<string, RepoStatus>
 }
 
 /** PendingUpdate as rendered in the webview: ages resolved on the host side. */
@@ -35,6 +41,18 @@ interface WebUpdate {
   readonly pastVulnsLabel?: string
   /** OSV ids affecting the installed version; the update fixes them */
   readonly installedVulns?: readonly string[]
+  /** OSV findings in bundled npm dependencies */
+  readonly depVulnLines?: readonly string[]
+  /** yellow source-repository warning, when the repo is private or missing */
+  readonly repoWarning?: string
+}
+
+/** RemovedRow as rendered in the webview. */
+interface WebRemoved {
+  readonly id: string
+  readonly displayName: string
+  readonly version: string
+  readonly reason: string
 }
 
 /** Runtime narrow for update objects round-tripping through the webview as unknown. */
@@ -120,6 +138,9 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
       if (message['type'] === 'updateAll') {
         void vscode.commands.executeCommand('extensionUpdater.updateAll')
       }
+      if (message['type'] === 'uninstall') {
+        void vscode.commands.executeCommand('extensionUpdater.uninstall', message['id'])
+      }
       if (message['type'] === 'update') {
         const update = asPendingUpdate(message['update'])
         if (update) void vscode.commands.executeCommand('extensionUpdater.update', update)
@@ -151,10 +172,19 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
       malicious: update.malicious,
       pastVulnsLabel: update.pastVulns ? strings.pastVulns(update.pastVulns) : undefined,
       installedVulns: update.installedVulns,
+      depVulnLines: update.depVulns?.map((dep) => `${dep.name} ${dep.version}: ${dep.ids.join(', ')}`),
+      repoWarning: repoWarningLabel(this.model.repoWarnings.get(update.id)),
+    }))
+    const removed: WebRemoved[] = this.model.removed.map((row) => ({
+      id: row.id,
+      displayName: row.displayName,
+      version: row.version,
+      reason: strings.removedReason(row.entry.date, row.entry.type),
     }))
     void view.webview.postMessage({
       type: 'state',
       updates,
+      removed,
       banner: this.resolveBanner(),
       reloadBanner:
         this.model.pendingReload.length > 0 ? strings.reloadBanner(this.model.pendingReload.length) : undefined,
@@ -175,6 +205,9 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
         updating: strings.updatingButton,
         reloadVscode: strings.reloadVscode,
         installedVulns: strings.installedVulns,
+        depVulns: strings.depVulns,
+        removedTitle: strings.removedTitle,
+        uninstall: strings.uninstallButton,
         fix: strings.fixAutoUpdate,
         reload: strings.reloadToTakeEffect,
         autoUpdateText: {
@@ -185,6 +218,12 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
       },
     })
   }
+}
+
+function repoWarningLabel(status: RepoStatus): string | undefined {
+  if (status === 'missing') return strings.repoMissing
+  if (status === 'private') return strings.repoPrivate
+  return undefined
 }
 
 function renderHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
@@ -210,6 +249,7 @@ function renderHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
 <div id="pending-title"></div>
 <div id="status"></div>
 <div id="list"></div>
+<div id="removed"></div>
 <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>
 </html>`

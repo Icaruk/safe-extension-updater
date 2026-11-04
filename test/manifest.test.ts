@@ -14,6 +14,7 @@ test('manifestToInstalled narrows a valid manifest, lowercasing the id', () => {
       version: '2.1.3',
       prerelease: false,
       manifestPreRelease: undefined,
+      repository: undefined,
     },
   )
 })

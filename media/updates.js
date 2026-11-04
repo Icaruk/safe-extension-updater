@@ -75,6 +75,41 @@ function render() {
   for (const update of state.updates) {
     list.appendChild(row(update))
   }
+
+  const removedBox = document.getElementById('removed')
+  removedBox.textContent = ''
+  if (state.removed?.length) {
+    const title = document.createElement('div')
+    title.className = 'removed-title'
+    title.textContent = state.labels.removedTitle
+    removedBox.appendChild(title)
+    for (const entry of state.removed) {
+      removedBox.appendChild(removedRow(entry))
+    }
+  }
+}
+
+function removedRow(entry) {
+  const rowEl = document.createElement('div')
+  rowEl.className = 'row removed'
+  const main = document.createElement('div')
+  main.className = 'main'
+  const name = document.createElement('div')
+  name.className = 'name'
+  name.textContent = entry.displayName
+  name.title = entry.id
+  const line2 = document.createElement('div')
+  line2.className = 'line2 removed-reason'
+  line2.textContent = `${entry.version} · ${entry.reason}`
+  main.appendChild(name)
+  main.appendChild(line2)
+  rowEl.appendChild(main)
+  const tag = document.createElement('span')
+  tag.className = 'tag malware'
+  tag.textContent = state.labels.uninstall
+  rowEl.appendChild(tag)
+  tag.addEventListener('click', () => vscode.postMessage({ type: 'uninstall', id: entry.id }))
+  return rowEl
 }
 
 function row(update) {
@@ -107,6 +142,12 @@ function row(update) {
   main.appendChild(name)
   main.appendChild(age)
   main.appendChild(line2)
+  if (update.repoWarning) {
+    const warn = document.createElement('div')
+    warn.className = 'repo-warning'
+    warn.textContent = update.repoWarning
+    main.appendChild(warn)
+  }
   if (update.pastVulnsLabel) {
     const past = document.createElement('div')
     past.className = 'past-vulns'
@@ -115,6 +156,12 @@ function row(update) {
   }
   if (update.installedVulns?.length) {
     main.appendChild(osvList('installed-vulns', state.labels.installedVulns, update.installedVulns))
+  }
+  if (update.depVulnLines?.length) {
+    const box = document.createElement('div')
+    box.className = 'dep-vulns'
+    box.textContent = `${state.labels.depVulns} ${update.depVulnLines.join(' · ')}`
+    main.appendChild(box)
   }
   if (update.malicious?.length) {
     main.appendChild(osvList('findings', state.labels.maliciousFindings, update.malicious))
