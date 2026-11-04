@@ -8,4 +8,4 @@ pre-commit:
 
     - name: typecheck
       glob: "*.ts"
-      run: pnpm exec tsc -p ./
+      run: pnpm compile
