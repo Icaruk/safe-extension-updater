@@ -17,11 +17,11 @@ test('flattens the whole node_modules tree including transitives and scopes', as
   await pkg(root, '@scope/pkg', '@scope/pkg', '3.0.0')
   const deps = await collectDependencyVersions(root)
   assert.deepEqual(
-    [...deps.values()],
+    [...deps.values()].sort((a, b) => a.name.localeCompare(b.name)),
     [
+      { name: '@scope/pkg', version: '3.0.0' },
       { name: 'direct', version: '1.0.0' },
       { name: 'transitive', version: '2.0.0' },
-      { name: '@scope/pkg', version: '3.0.0' },
     ],
   )
 })

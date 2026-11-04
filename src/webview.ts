@@ -42,7 +42,7 @@ interface WebUpdate {
   /** OSV ids affecting the installed version; the update fixes them */
   readonly installedVulns?: readonly string[]
   /** OSV findings in bundled npm dependencies */
-  readonly depVulnLines?: readonly string[]
+  readonly depVulns?: readonly { readonly name: string; readonly version: string; readonly ids: readonly string[] }[]
   /** yellow source-repository warning, when the repo is private or missing */
   readonly repoWarning?: string
 }
@@ -172,7 +172,7 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
       malicious: update.malicious,
       pastVulnsLabel: update.pastVulns ? strings.pastVulns(update.pastVulns) : undefined,
       installedVulns: update.installedVulns,
-      depVulnLines: update.depVulns?.map((dep) => `${dep.name} ${dep.version}: ${dep.ids.join(', ')}`),
+      depVulns: update.depVulns,
       repoWarning: repoWarningLabel(this.model.repoWarnings.get(update.id)),
     }))
     const removed: WebRemoved[] = this.model.removed.map((row) => ({

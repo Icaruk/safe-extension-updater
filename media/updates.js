@@ -157,10 +157,23 @@ function row(update) {
   if (update.installedVulns?.length) {
     main.appendChild(osvList('installed-vulns', state.labels.installedVulns, update.installedVulns))
   }
-  if (update.depVulnLines?.length) {
+  if (update.depVulns?.length) {
     const box = document.createElement('div')
     box.className = 'dep-vulns'
-    box.textContent = `${state.labels.depVulns} ${update.depVulnLines.join(' · ')}`
+    box.textContent = state.labels.depVulns
+    for (const dep of update.depVulns) {
+      const item = document.createElement('div')
+      item.className = 'dep-vulns-item'
+      item.append(`· ${dep.name} ${dep.version}: `)
+      dep.ids.forEach((osvId, index) => {
+        if (index > 0) item.append(', ')
+        const link = document.createElement('a')
+        link.href = `https://osv.dev/vulnerability/${osvId}`
+        link.textContent = osvId
+        item.append(link)
+      })
+      box.appendChild(item)
+    }
     main.appendChild(box)
   }
   if (update.malicious?.length) {
@@ -201,18 +214,23 @@ function actionButton(label, type, className) {
   return button
 }
 
-/** Div with a label followed by comma-separated links to OSV entries. */
+/** Label on its own line, comma-separated links to OSV entries below it. */
 function osvList(className, label, osvIds) {
   const box = document.createElement('div')
   box.className = className
-  box.append(`${label} `)
+  const labelLine = document.createElement('div')
+  labelLine.textContent = label
+  box.appendChild(labelLine)
+  const idsLine = document.createElement('div')
+  idsLine.className = 'osv-ids'
   osvIds.forEach((osvId, index) => {
-    if (index > 0) box.append(', ')
+    if (index > 0) idsLine.append(', ')
     const link = document.createElement('a')
     link.href = `https://osv.dev/vulnerability/${osvId}`
     link.textContent = osvId
-    box.append(link)
+    idsLine.append(link)
   })
+  box.appendChild(idsLine)
   return box
 }
 

@@ -27,7 +27,8 @@ function numberSetting(configuration: vscode.WorkspaceConfiguration, key: string
 /**
  * Development-only sample rows covering every UI case (F5 launch):
  * plain update, updated-this-session, downgrade, active malware finding,
- * recent + past vulns, installed-version vuln ("Must update").
+ * recent + past vulns, installed-version vuln ("Must update"),
+ * private repository warning, bundled-dependency finding.
  * Ids are fake on purpose: clicking Update on them fails harmlessly.
  */
 function mockUpdates(): readonly PendingUpdate[] {
@@ -56,7 +57,7 @@ function mockUpdates(): readonly PendingUpdate[] {
       pastVulns: 1,
     },
     {
-      id: 'sample.demo',
+      id: 'sample.shrinker',
       displayName: 'CSS shrinker',
       installedVersion: '0.9.0',
       availableVersion: '1.0.0',
@@ -70,6 +71,10 @@ function mockUpdates(): readonly PendingUpdate[] {
       availableVersion: '2.2.0',
       releasedAt: hoursAgo(8),
       pastVulns: 3,
+      depVulns: [
+        { name: 'leftpad', version: '3.2.5', ids: ['MAL-DEMO-003'] },
+        { name: 'is-odd', version: '1.4.0', ids: ['MAL-DEMO-004'] },
+      ],
     },
     {
       id: 'sample.demo',
@@ -87,7 +92,6 @@ function mockUpdates(): readonly PendingUpdate[] {
       availableVersion: '0.9.0',
       releasedAt: hoursAgo(30),
       installedVulns: ['MAL-DEMO-0002'],
-      depVulns: [{ name: 'demo-dep', version: '1.0.0', ids: ['MAL-DEMO-0003'] }],
     },
   ]
 }
@@ -242,7 +246,11 @@ export function activate(context: vscode.ExtensionContext): void {
         }
         // F5 launch only: append the sample rows so every UI case is visible.
         if (context.extensionMode === vscode.ExtensionMode.Development) {
-          cache = { ...cache, updates: [...cache.updates, ...mockUpdates()] }
+          cache = {
+            ...cache,
+            updates: [...cache.updates, ...mockUpdates()],
+            repoWarnings: new Map([...cache.repoWarnings, ['sample.shrinker', 'private']]),
+          }
           setWaitingReload([...new Set([...waitingReload, 'sample.updated'])])
         }
         // Prune ids that no longer have a pending row: after a window reload
