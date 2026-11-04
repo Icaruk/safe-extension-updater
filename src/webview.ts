@@ -1,43 +1,43 @@
-import * as vscode from 'vscode';
-import { isRecentRelease, relativeAge } from './core/release.js';
-import { isRecord } from './core/narrow.js';
-import type { PendingUpdate } from './gallery/types.js';
-import { strings } from './strings.js';
+import * as vscode from 'vscode'
+import { isRecord } from './core/narrow.js'
+import { isRecentRelease, relativeAge } from './core/release.js'
+import type { PendingUpdate } from './gallery/types.js'
+import { strings } from './strings.js'
 
 export interface UpdatesModel {
   /** current pending updates (cache contents) */
-  readonly updates: readonly PendingUpdate[];
+  readonly updates: readonly PendingUpdate[]
   /** `extensionUpdater.earlyReleaseProtectionHours`, read live so config changes apply on refresh */
-  readonly thresholdHours: number;
+  readonly thresholdHours: number
 }
 
 /** PendingUpdate as rendered in the webview: ages resolved on the host side. */
 interface WebUpdate {
-  readonly id: string;
-  readonly displayName: string;
-  readonly installedVersion: string;
-  readonly availableVersion: string;
+  readonly id: string
+  readonly displayName: string
+  readonly installedVersion: string
+  readonly availableVersion: string
   /** ISO-8601; kept so the object can round-trip back as a PendingUpdate */
-  readonly releasedAt: string;
-  readonly iconUrl?: string;
-  readonly publisher: string;
-  readonly age: string;
-  readonly recent: boolean;
-  readonly malicious?: readonly string[];
-  readonly pastVulnsLabel?: string;
+  readonly releasedAt: string
+  readonly iconUrl?: string
+  readonly publisher: string
+  readonly age: string
+  readonly recent: boolean
+  readonly malicious?: readonly string[]
+  readonly pastVulnsLabel?: string
   /** OSV ids affecting the installed version; the update fixes them */
-  readonly installedVulns?: readonly string[];
+  readonly installedVulns?: readonly string[]
 }
 
 /** Runtime narrow for update objects round-tripping through the webview as unknown. */
 export function asPendingUpdate(value: unknown): PendingUpdate | undefined {
-  if (typeof value !== 'object' || value === null) return undefined;
-  const record = value as Record<string, unknown>;
-  const id = record['id'];
-  const displayName = record['displayName'];
-  const installedVersion = record['installedVersion'];
-  const availableVersion = record['availableVersion'];
-  const releasedAt = record['releasedAt'];
+  if (typeof value !== 'object' || value === null) return undefined
+  const record = value as Record<string, unknown>
+  const id = record['id']
+  const displayName = record['displayName']
+  const installedVersion = record['installedVersion']
+  const availableVersion = record['availableVersion']
+  const releasedAt = record['releasedAt']
   if (
     typeof id !== 'string' ||
     typeof displayName !== 'string' ||
@@ -45,9 +45,9 @@ export function asPendingUpdate(value: unknown): PendingUpdate | undefined {
     typeof availableVersion !== 'string' ||
     typeof releasedAt !== 'string'
   ) {
-    return undefined;
+    return undefined
   }
-  return { id, displayName, installedVersion, availableVersion, releasedAt };
+  return { id, displayName, installedVersion, availableVersion, releasedAt }
 }
 
 /**
@@ -57,75 +57,75 @@ export function asPendingUpdate(value: unknown): PendingUpdate | undefined {
  * since 1.73), so the native look requires a webview.
  */
 export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
-  private view: vscode.WebviewView | undefined;
-  private searching = false;
+  private view: vscode.WebviewView | undefined
+  private searching = false
 
   constructor(
     private readonly extensionUri: vscode.Uri,
     private readonly model: UpdatesModel,
     private readonly resolveBanner: () => string | undefined,
     private readonly resolveAutoUpdate: () => {
-      state: 'enabled' | 'partial' | 'disabled';
-      needsReload: boolean;
+      state: 'enabled' | 'partial' | 'disabled'
+      needsReload: boolean
     },
   ) {}
 
   /** Set while the gallery query is in flight; shown as a muted status line. */
   setSearching(searching: boolean): void {
-    this.searching = searching;
-    this.post();
+    this.searching = searching
+    this.post()
   }
 
   /** Push the current model + banner into the webview (no-op while unresolved). */
   invalidate(): void {
-    this.post();
+    this.post()
   }
 
   resolveWebviewView(view: vscode.WebviewView): void {
-    this.view = view;
+    this.view = view
     // html BEFORE options: main-side webviews start with html '' and
     // contentOptions {}, so setting options first re-pushes EMPTY html once and
     // the iframe fires no-csp-found (dev-mode warning). With html stored first,
     // the options push carries our CSP html instead.
-    view.webview.html = renderHtml(view.webview, this.extensionUri);
-    view.webview.options = { enableScripts: true, localResourceRoots: [this.extensionUri] };
+    view.webview.html = renderHtml(view.webview, this.extensionUri)
+    view.webview.options = { enableScripts: true, localResourceRoots: [this.extensionUri] }
     view.onDidDispose(() => {
-      this.view = undefined;
-    });
+      this.view = undefined
+    })
     // The auto-update opt-in list lives in VS Code's internal storage: no event
     // fires when the user toggles it elsewhere, so re-query on every activation.
     view.onDidChangeVisibility(() => {
-      if (view.visible) this.post();
-    });
+      if (view.visible) this.post()
+    })
     view.webview.onDidReceiveMessage((message: unknown) => {
-      if (!isRecord(message)) return;
-      if (message['type'] === 'ready') this.post();
+      if (!isRecord(message)) return
+      if (message['type'] === 'ready') this.post()
       if (message['type'] === 'fixAutoUpdate') {
-        void vscode.commands.executeCommand('extensionUpdater.disableAutoUpdate');
+        void vscode.commands.executeCommand('extensionUpdater.disableAutoUpdate')
       }
       if (message['type'] === 'reload') {
-        void vscode.commands.executeCommand('workbench.action.reloadWindow');
+        void vscode.commands.executeCommand('workbench.action.reloadWindow')
       }
       if (message['type'] === 'refresh') {
-        void vscode.commands.executeCommand('extensionUpdater.refresh');
+        void vscode.commands.executeCommand('extensionUpdater.refresh')
       }
       if (message['type'] === 'updateAll') {
-        void vscode.commands.executeCommand('extensionUpdater.updateAll');
+        void vscode.commands.executeCommand('extensionUpdater.updateAll')
       }
       if (message['type'] === 'update') {
-        const update = asPendingUpdate(message['update']);
-        if (update) void vscode.commands.executeCommand('extensionUpdater.update', update);
+        const update = asPendingUpdate(message['update'])
+        if (update) void vscode.commands.executeCommand('extensionUpdater.update', update)
       }
-    });
+    })
     // If 'ready' already fired, the handler above re-posts; otherwise this wins the race.
-    this.post();
+    this.post()
   }
 
   private post(): void {
-    const view = this.view;
-    if (!view) return;
-    const now = new Date();
-    const autoUpdate = this.resolveAutoUpdate();
+    const view = this.view
+    if (!view) return
+    const now = new Date()
+    const autoUpdate = this.resolveAutoUpdate()
     const updates: WebUpdate[] = this.model.updates.map((update) => ({
       id: update.id,
       displayName: update.displayName,
@@ -140,7 +140,7 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
       malicious: update.malicious,
       pastVulnsLabel: update.pastVulns ? strings.pastVulns(update.pastVulns) : undefined,
       installedVulns: update.installedVulns,
-    }));
+    }))
     void view.webview.postMessage({
       type: 'state',
       updates,
@@ -167,18 +167,18 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
           disabled: strings.autoUpdateDisabled,
         },
       },
-    });
+    })
   }
 }
 
 function renderHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
   const nonce = [...crypto.getRandomValues(new Uint8Array(16))]
     .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('');
+    .join('')
   // gallery icons come from https CDNs; styles/scripts are extension files (official sample pattern)
-  const csp = `default-src 'none'; img-src https: ${webview.cspSource}; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';`;
-  const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'updates.css'));
-  const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'updates.js'));
+  const csp = `default-src 'none'; img-src https: ${webview.cspSource}; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';`
+  const styleUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'updates.css'))
+  const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(extensionUri, 'media', 'updates.js'))
   return /* html */ `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -195,5 +195,5 @@ function renderHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
 <div id="list"></div>
 <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>
-</html>`;
+</html>`
 }

@@ -10,8 +10,7 @@ export const strings = {
   maliciousButton: 'Malware',
   checkUpdatesLabel: 'Check for updates',
   maliciousFindings: '⚠ Malicious code (OSV):',
-  pastVulns: (count: number): string =>
-    `${count} past ${count === 1 ? 'vulnerability' : 'vulnerabilities'} found.`,
+  pastVulns: (count: number): string => `${count} past ${count === 1 ? 'vulnerability' : 'vulnerabilities'} found.`,
   installedVulns: '⚠ Installed version affected (OSV):',
   queryError: (detail: string): string => `Failed to query the extension gallery: ${detail}`,
   autoUpdateWarning:
@@ -34,4 +33,4 @@ export const strings = {
   updateAllSummary: (updated: number, failures: readonly string[]): string =>
     `${updated} updated, ${failures.length} failed: ${failures.join(', ')}`,
   updateFailed: (id: string, detail: string): string => `Failed to update ${id}: ${detail}`,
-};
+}

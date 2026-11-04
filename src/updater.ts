@@ -1,20 +1,20 @@
-import * as vscode from 'vscode';
+import * as vscode from 'vscode'
+import { manifestToInstalled } from './core/manifest.js'
 import {
+  type InstalledExtension,
   isInstalledPreRelease,
   isRecentRelease,
+  type PickContext,
   pickUpdate,
   relativeAge,
-  type InstalledExtension,
-  type PickContext,
-} from './core/release.js';
-import type { ExtensionGalleryClient, PendingUpdate } from './gallery/types.js';
-import { manifestToInstalled } from './core/manifest.js';
-import { strings } from './strings.js';
+} from './core/release.js'
+import type { ExtensionGalleryClient, PendingUpdate } from './gallery/types.js'
+import { strings } from './strings.js'
 
 export type UpdateAllResult = {
-  readonly updatedIds: readonly string[];
-  readonly failures: readonly string[];
-};
+  readonly updatedIds: readonly string[]
+  readonly failures: readonly string[]
+}
 
 /**
  * VS Code layer around the pure update logic: reads installed extensions,
@@ -23,7 +23,7 @@ export type UpdateAllResult = {
  */
 export class Updater {
   /** Tri-state: undefined = capability unknown, true = pinning works, false = rejected. */
-  private pinSupported: boolean | undefined;
+  private pinSupported: boolean | undefined
 
   constructor(
     private readonly getGallery: () => ExtensionGalleryClient,
@@ -32,48 +32,48 @@ export class Updater {
 
   /** Scan installed extensions and resolve every pending update against the gallery. */
   async collectPending(): Promise<readonly PendingUpdate[]> {
-    const now = new Date();
-    const installed = this.collectInstalled();
-    if (installed.length === 0) return [];
+    const now = new Date()
+    const installed = this.collectInstalled()
+    if (installed.length === 0) return []
 
-    const galleryList = await this.getGallery().query(installed.map((ext) => ext.id));
-    const byId = new Map(galleryList.map((gallery) => [gallery.id.toLowerCase(), gallery]));
+    const galleryList = await this.getGallery().query(installed.map((ext) => ext.id))
+    const byId = new Map(galleryList.map((gallery) => [gallery.id.toLowerCase(), gallery]))
 
-    const pending: PendingUpdate[] = [];
+    const pending: PendingUpdate[] = []
     for (const ext of installed) {
-      const gallery = byId.get(ext.id);
-      if (!gallery) continue;
-      const prerelease = isInstalledPreRelease(ext.manifestPreRelease, ext.version, gallery);
-      const ctx: PickContext = { hostVersion: this.hostVersion, now };
-      const update = pickUpdate({ ...ext, prerelease }, gallery, ctx);
-      if (update) pending.push(update);
+      const gallery = byId.get(ext.id)
+      if (!gallery) continue
+      const prerelease = isInstalledPreRelease(ext.manifestPreRelease, ext.version, gallery)
+      const ctx: PickContext = { hostVersion: this.hostVersion, now }
+      const update = pickUpdate({ ...ext, prerelease }, gallery, ctx)
+      if (update) pending.push(update)
     }
-    return pending;
+    return pending
   }
 
   private collectInstalled(): (InstalledExtension & { readonly manifestPreRelease: unknown })[] {
-    const installed: (InstalledExtension & { readonly manifestPreRelease: unknown })[] = [];
+    const installed: (InstalledExtension & { readonly manifestPreRelease: unknown })[] = []
     for (const ext of vscode.extensions.all) {
-      const appRoot = vscode.Uri.file(vscode.env.appRoot).fsPath;
-      const entry = manifestToInstalled(ext.packageJSON, ext.extensionUri.fsPath.startsWith(appRoot));
-      if (entry) installed.push(entry);
+      const appRoot = vscode.Uri.file(vscode.env.appRoot).fsPath
+      const entry = manifestToInstalled(ext.packageJSON, ext.extensionUri.fsPath.startsWith(appRoot))
+      if (entry) installed.push(entry)
     }
-    return installed;
+    return installed
   }
 
   /** Install one update, warning first when its release is recent. */
   async updateOne(update: PendingUpdate, thresholdHours: number): Promise<'updated' | 'cancelled'> {
     if (isRecentRelease(update.releasedAt, new Date(), thresholdHours)) {
-      const age = relativeAge(update.releasedAt, new Date());
+      const age = relativeAge(update.releasedAt, new Date())
       const choice = await vscode.window.showWarningMessage(
         strings.updateOneWarning(update.availableVersion, age),
         { modal: true },
         strings.updateAnyway,
-      );
-      if (choice !== strings.updateAnyway) return 'cancelled';
+      )
+      if (choice !== strings.updateAnyway) return 'cancelled'
     }
-    await this.install(update);
-    return 'updated';
+    await this.install(update)
+    return 'updated'
   }
 
   /**
@@ -84,21 +84,21 @@ export class Updater {
    * actually installed.
    */
   async updateAll(updates: readonly PendingUpdate[], thresholdHours: number): Promise<UpdateAllResult> {
-    const now = new Date();
+    const now = new Date()
     const selected = updates.filter(
-      (update) => !isRecentRelease(update.releasedAt, now, thresholdHours) && !(update.malicious?.length),
-    );
-    const updatedIds: string[] = [];
-    const failures: string[] = [];
+      (update) => !isRecentRelease(update.releasedAt, now, thresholdHours) && !update.malicious?.length,
+    )
+    const updatedIds: string[] = []
+    const failures: string[] = []
     for (const update of selected) {
       try {
-        await this.install(update);
-        updatedIds.push(update.id);
+        await this.install(update)
+        updatedIds.push(update.id)
       } catch {
-        failures.push(update.id);
+        failures.push(update.id)
       }
     }
-    return { updatedIds, failures };
+    return { updatedIds, failures }
   }
 
   /**
@@ -114,16 +114,16 @@ export class Updater {
         await vscode.commands.executeCommand(
           'workbench.extensions.installExtension',
           `${update.id}@${update.availableVersion}`,
-        );
-        this.pinSupported = true;
-        return;
+        )
+        this.pinSupported = true
+        return
       } catch (error) {
-        if (this.pinSupported === true) throw error; // pinning already proven; real failure
-        this.pinSupported = false; // host rejected the pinned id → fall through
-        console.warn(`Pinned install rejected for ${update.id}, falling back: ${String(error)}`);
+        if (this.pinSupported === true) throw error // pinning already proven; real failure
+        this.pinSupported = false // host rejected the pinned id → fall through
+        console.warn(`Pinned install rejected for ${update.id}, falling back: ${String(error)}`)
       }
     }
-    const [latest] = await this.getGallery().query([update.id]);
+    const [latest] = await this.getGallery().query([update.id])
     const current = latest
       ? pickUpdate(
           {
@@ -135,12 +135,12 @@ export class Updater {
           latest,
           { hostVersion: this.hostVersion, now: new Date() },
         )
-      : undefined;
+      : undefined
     if (current && current.availableVersion !== update.availableVersion) {
       void vscode.window.showWarningMessage(
         strings.versionChanged(update.displayName, update.availableVersion, current.availableVersion),
-      );
+      )
     }
-    await vscode.commands.executeCommand('workbench.extensions.installExtension', update.id);
+    await vscode.commands.executeCommand('workbench.extensions.installExtension', update.id)
   }
 }
