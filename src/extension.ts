@@ -185,9 +185,11 @@ export function activate(context: vscode.ExtensionContext): void {
       try {
         const outcome = await updater.updateOne(update, readConfig().thresholdHours)
         if (outcome === 'updated') {
+          // No forced refresh here: until the window reloads, VS Code still
+          // reports the OLD running version, so a re-query would re-detect
+          // this same pending update. The row is dropped until the next
+          // scheduled/manual refresh after reload.
           cache = { ...cache, updates: cache.updates.filter((entry) => entry.id !== update.id) }
-          // updated install may still be the old running version: re-check
-          void refresh(true)
         }
       } catch (error) {
         void vscode.window.showErrorMessage(strings.updateFailed(update.id, String(error)))
@@ -207,7 +209,6 @@ export function activate(context: vscode.ExtensionContext): void {
         if (result.failures.length > 0) {
           void vscode.window.showErrorMessage(strings.updateAllSummary(result.updatedIds.length, result.failures))
         }
-        void refresh(true)
       } catch (error) {
         void vscode.window.showErrorMessage(String(error))
       }
