@@ -2,24 +2,28 @@
 // from the host and renders the pending-updates list.
 const vscode = acquireVsCodeApi()
 let state
+
 window.addEventListener('message', (event) => {
   if (event.data?.type === 'state') {
     state = event.data
     render()
   }
 })
+
 vscode.postMessage({ type: 'ready' })
 
 function render() {
   const autoUpdate = document.getElementById('auto-update')
   autoUpdate.textContent = ''
   autoUpdate.className = state.autoUpdate === 'disabled' ? 'centered' : ''
+
   const line = document.createElement('div')
   line.className = 'auto-update'
   if (state.autoUpdate === 'disabled') line.appendChild(stateIcon(CHECK_PATH))
   else line.appendChild(stateIcon(CLOSE_PATH))
   line.append(state.labels.autoUpdateText[state.autoUpdate])
   autoUpdate.appendChild(line)
+
   if (state.needsReload) {
     autoUpdate.appendChild(actionButton(state.labels.reload, 'reload', 'fix'))
   } else if (state.autoUpdate !== 'disabled') {
@@ -28,28 +32,34 @@ function render() {
 
   const banner = document.getElementById('banner')
   banner.textContent = ''
+
   const reloadBanner = document.getElementById('reload-banner')
   reloadBanner.textContent = ''
   if (state.reloadBanner) {
     const box = document.createElement('div')
     box.className = 'banner reload'
     box.textContent = state.reloadBanner
+
     const reloadButton = actionButton(state.labels.reloadVscode, 'reload', 'reload')
     box.appendChild(reloadButton)
+
     reloadBanner.appendChild(box)
   }
+
   if (state.banner) {
     const box = document.createElement('div')
     box.className = 'banner'
     box.textContent = state.banner
     banner.appendChild(box)
   }
+
   const status = document.getElementById('status')
   status.textContent = state.searching ? state.labels.searching : ''
 
   const actions = document.getElementById('actions-group')
   actions.textContent = ''
   actions.style.display = state.updates.length > 0 ? '' : 'none'
+
   if (state.updates.length > 0) {
     actions.appendChild(actionButton(state.labels.checkUpdates, 'refresh'))
     actions.appendChild(actionButton(state.labels.updateAll, 'updateAll'))
@@ -65,6 +75,7 @@ function render() {
 
   const list = document.getElementById('list')
   list.textContent = ''
+
   if (state.updates.length === 0 && !state.searching) {
     const empty = document.createElement('div')
     empty.className = 'empty'
@@ -72,17 +83,20 @@ function render() {
     empty.append(state.labels.empty)
     list.appendChild(empty)
   }
+
   for (const update of state.updates) {
     list.appendChild(row(update))
   }
 
   const removedBox = document.getElementById('removed')
   removedBox.textContent = ''
+
   if (state.removed?.length) {
     const title = document.createElement('div')
     title.className = 'removed-title'
     title.textContent = state.labels.removedTitle
     removedBox.appendChild(title)
+
     for (const entry of state.removed) {
       removedBox.appendChild(removedRow(entry))
     }
@@ -92,23 +106,31 @@ function render() {
 function removedRow(entry) {
   const rowEl = document.createElement('div')
   rowEl.className = 'row removed'
+
   const main = document.createElement('div')
   main.className = 'main'
+
   const name = document.createElement('div')
   name.className = 'name'
   name.textContent = entry.displayName
   name.title = entry.id
+
   const line2 = document.createElement('div')
   line2.className = 'line2 removed-reason'
   line2.textContent = `${entry.version} · ${entry.reason}`
+
   main.appendChild(name)
   main.appendChild(line2)
   rowEl.appendChild(main)
+
   const tag = document.createElement('span')
   tag.className = 'tag malware'
   tag.textContent = state.labels.uninstall
+
   rowEl.appendChild(tag)
+
   tag.addEventListener('click', () => vscode.postMessage({ type: 'uninstall', id: entry.id }))
+
   return rowEl
 }
 
@@ -129,56 +151,71 @@ function row(update) {
 
   const main = document.createElement('div')
   main.className = 'main'
+
   const name = document.createElement('div')
   name.className = 'name'
   name.textContent = update.displayName
   name.title = update.id
+
   const age = document.createElement('div')
   age.className = update.recent ? 'age recent' : 'age'
   age.textContent = update.age
+
   const line2 = document.createElement('div')
   line2.className = 'line2'
   line2.textContent = `${update.installedVersion} → ${update.availableVersion} · ${update.publisher}`
+
   main.appendChild(name)
   main.appendChild(age)
   main.appendChild(line2)
+
   if (update.repoWarning) {
     const warn = document.createElement('div')
     warn.className = 'repo-warning'
     warn.textContent = update.repoWarning
     main.appendChild(warn)
   }
+
   if (update.pastVulnsLabel) {
     const past = document.createElement('div')
     past.className = 'past-vulns'
     past.textContent = update.pastVulnsLabel
     main.appendChild(past)
   }
+
   if (update.installedVulns?.length) {
     main.appendChild(osvList('installed-vulns', state.labels.installedVulns, update.installedVulns))
   }
+
   if (update.depVulns?.length) {
     const box = document.createElement('div')
     box.className = 'dep-vulns'
     box.textContent = state.labels.depVulns
+
     for (const dep of update.depVulns) {
       const item = document.createElement('div')
       item.className = 'dep-vulns-item'
       item.append(`· ${dep.name} ${dep.version}: `)
+
       dep.ids.forEach((osvId, index) => {
         if (index > 0) item.append(', ')
+
         const link = document.createElement('a')
         link.href = `https://osv.dev/vulnerability/${osvId}`
         link.textContent = osvId
         item.append(link)
       })
+
       box.appendChild(item)
     }
+
     main.appendChild(box)
   }
+
   if (update.malicious?.length) {
     main.appendChild(osvList('findings', state.labels.maliciousFindings, update.malicious))
   }
+
   rowEl.appendChild(main)
 
   if (update.malicious?.length || update.updated) {
@@ -200,8 +237,11 @@ function row(update) {
   const button = document.createElement('button')
   button.className = update.installedVulns?.length ? 'must' : update.recent ? 'soon' : ''
   button.textContent = update.installedVulns?.length ? state.labels.mustUpdate : state.labels.update
+
   button.addEventListener('click', () => vscode.postMessage({ type: 'update', update }))
+
   rowEl.appendChild(button)
+
   return rowEl
 }
 
@@ -210,7 +250,9 @@ function actionButton(label, type, className) {
   const button = document.createElement('button')
   if (className) button.className = className
   button.textContent = label
+
   button.addEventListener('click', () => vscode.postMessage({ type }))
+
   return button
 }
 
@@ -218,19 +260,25 @@ function actionButton(label, type, className) {
 function osvList(className, label, osvIds) {
   const box = document.createElement('div')
   box.className = className
+
   const labelLine = document.createElement('div')
   labelLine.textContent = label
   box.appendChild(labelLine)
+
   const idsLine = document.createElement('div')
   idsLine.className = 'osv-ids'
+
   osvIds.forEach((osvId, index) => {
     if (index > 0) idsLine.append(', ')
+
     const link = document.createElement('a')
     link.href = `https://osv.dev/vulnerability/${osvId}`
     link.textContent = osvId
     idsLine.append(link)
   })
+
   box.appendChild(idsLine)
+
   return box
 }
 

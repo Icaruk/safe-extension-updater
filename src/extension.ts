@@ -159,6 +159,20 @@ export function activate(context: vscode.ExtensionContext): void {
   const updater = new Updater(() => resolveGallery(readConfig().gallery, vscode.env.appName, userAgent), vscode.version)
   const guard = new AutoUpdateGuard(context)
 
+  // The webview view resolves lazily (only after its first open), so its badge
+  // cannot appear at startup. This hidden tree view exists from activation and
+  // carries the pending-update count on the activity-bar icon instead.
+  const badgeView = vscode.window.createTreeView('extensionUpdater.badge', {
+    treeDataProvider: {
+      getChildren: (): never[] => [],
+      getTreeItem: (element: never): vscode.TreeItem => ({ label: String(element) }),
+    },
+  })
+  const syncBadge = (): void => {
+    const count = cache.updates.length
+    badgeView.badge = count > 0 ? { value: count, tooltip: strings.badgeTooltip(count) } : undefined
+  }
+
   const schedule = (): void => {
     if (timer) clearInterval(timer)
     const hours = readConfig().refreshIntervalHours
@@ -253,6 +267,7 @@ export function activate(context: vscode.ExtensionContext): void {
           }
           setWaitingReload([...new Set([...waitingReload, 'sample.updated'])])
         }
+        syncBadge()
         // Prune ids that no longer have a pending row: after a window reload
         // the updated extensions are current again and their rows are gone.
         setWaitingReload(waitingReload.filter((id) => cache.updates.some((entry) => entry.id === id)))
@@ -273,6 +288,7 @@ export function activate(context: vscode.ExtensionContext): void {
   })
 
   context.subscriptions.push(
+    badgeView,
     vscode.window.registerWebviewViewProvider('extensionUpdater.updates', webview, {
       webviewOptions: { retainContextWhenHidden: true },
     }),

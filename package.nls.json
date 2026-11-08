@@ -2,6 +2,7 @@
   "extension.description": "Protects you from malicious updates, unsafe native auto-update setups, and releases published too recently to be trusted.",
   "viewsContainers.activitybar.title": "Safe Extension Updater",
   "views.updates.name": "Pending updates:",
+  "views.badge.name": "Update count",
   "command.category": "Safe Extension Updater",
   "command.updateAll.title": "Update all safely",
   "command.refresh.title": "Refresh",

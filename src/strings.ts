@@ -38,6 +38,7 @@ export const strings = {
   updateAnyway: 'Update anyway',
   updateAllLabel: 'Update all safely',
   pendingUpdates: 'Available updates',
+  badgeTooltip: (count: number): string => `${count} ${count === 1 ? 'update' : 'updates'} available`,
   updateOneWarning: (version: string, age: string): string =>
     `The version ${version} was released ${age}.\n\nVery recent releases may contain unreviewed or compromised changes.\n\nUpdate anyway?`,
   versionChanged: (displayName: string, shown: string, current: string): string =>

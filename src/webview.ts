@@ -153,6 +153,9 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
   private post(): void {
     const view = this.view
     if (!view) return
+    // Activity-bar badge mirrors the native Extensions icon: pending-update count.
+    const count = this.model.updates.length
+    view.badge = count > 0 ? { value: count, tooltip: strings.badgeTooltip(count) } : undefined
     const now = new Date()
     const autoUpdate = this.resolveAutoUpdate()
     const waiting = new Set(this.model.pendingReload)
