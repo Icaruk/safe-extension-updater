@@ -43,8 +43,9 @@ interface WebUpdate {
   readonly installedVulns?: readonly string[]
   /** OSV findings in bundled npm dependencies */
   readonly depVulns?: readonly { readonly name: string; readonly version: string; readonly ids: readonly string[] }[]
-  /** yellow source-repository warning, when the repo is private or missing */
-  readonly repoWarning?: string
+  /** source-repository notice: yellow warning when the repo cannot be audited,
+   * gray info line when it is simply outside GitHub */
+  readonly repoNotice?: { readonly text: string; readonly muted: boolean }
 }
 
 /** RemovedRow as rendered in the webview. */
@@ -176,7 +177,7 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
       pastVulnsLabel: update.pastVulns ? strings.pastVulns(update.pastVulns) : undefined,
       installedVulns: update.installedVulns,
       depVulns: update.depVulns,
-      repoWarning: repoWarningLabel(this.model.repoWarnings.get(update.id)),
+      repoNotice: repoNoticeLabel(this.model.repoWarnings.get(update.id)),
     }))
     const removed: WebRemoved[] = this.model.removed.map((row) => ({
       id: row.id,
@@ -223,9 +224,10 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
   }
 }
 
-function repoWarningLabel(status: RepoStatus): string | undefined {
-  if (status === 'missing') return strings.repoMissing
-  if (status === 'private') return strings.repoPrivate
+function repoNoticeLabel(status: RepoStatus): { readonly text: string; readonly muted: boolean } | undefined {
+  if (status === 'missing') return { text: strings.repoMissing, muted: false }
+  if (status === 'private') return { text: strings.repoPrivate, muted: false }
+  if (status === 'outside-github') return { text: strings.repoOutsideGithub, muted: true }
   return undefined
 }
 

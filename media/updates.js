@@ -169,11 +169,11 @@ function row(update) {
   main.appendChild(age)
   main.appendChild(line2)
 
-  if (update.repoWarning) {
-    const warn = document.createElement('div')
-    warn.className = 'repo-warning'
-    warn.textContent = update.repoWarning
-    main.appendChild(warn)
+  if (update.repoNotice) {
+    const notice = document.createElement('div')
+    notice.className = update.repoNotice.muted ? 'repo-notice' : 'repo-warning'
+    notice.textContent = update.repoNotice.text
+    main.appendChild(notice)
   }
 
   if (update.pastVulnsLabel) {

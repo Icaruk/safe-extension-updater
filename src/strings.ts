@@ -24,6 +24,7 @@ export const strings = {
   uninstallFailed: (id: string, detail: string): string => `Failed to uninstall ${id}: ${detail}`,
   repoMissing: '⚠ No public source repository declared.',
   repoPrivate: '⚠ Source repository is private or unavailable.',
+  repoOutsideGithub: 'Source is not on GitHub: cannot check history.',
   queryError: (detail: string): string => `Failed to query the extension gallery: ${detail}`,
   autoUpdateWarning:
     'Native VS Code auto-update is active and may update extensions before you review them. Turn it off?',
