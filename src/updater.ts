@@ -1,5 +1,8 @@
+import * as fs from 'node:fs'
+import * as path from 'node:path'
 import * as vscode from 'vscode'
-import { manifestToInstalled } from './core/manifest.js'
+import { filterRegistered, manifestToInstalled } from './core/manifest.js'
+import { asString, isRecord } from './core/narrow.js'
 import {
   type InstalledExtension,
   isInstalledPreRelease,
@@ -14,6 +17,29 @@ import { strings } from './strings.js'
 export type UpdateAllResult = {
   readonly updatedIds: readonly string[]
   readonly failures: readonly string[]
+}
+
+/**
+ * Folder names registered as installed in the extensions directory's
+ * `extensions.json`; undefined when the index cannot be read, so the caller
+ * counts unfiltered (fail-open).
+ * ponytail: extensions.json is undocumented VS Code storage; if it ever
+ * changes shape, we degrade to the old leftover-copy counting.
+ */
+function readRegistered(dir: string): ReadonlySet<string> | undefined {
+  try {
+    const raw: unknown = JSON.parse(fs.readFileSync(path.join(dir, 'extensions.json'), 'utf8'))
+    if (!Array.isArray(raw)) return undefined
+    const registered = new Set<string>()
+    for (const entry of raw) {
+      if (!isRecord(entry)) continue
+      const location = asString(entry['relativeLocation'])
+      if (location) registered.add(location)
+    }
+    return registered.size > 0 ? registered : undefined
+  } catch {
+    return undefined
+  }
 }
 
 /**
@@ -52,7 +78,10 @@ export class Updater {
   }
 
   /** Installed extensions (narrowed manifests), for security checks outside the update flow. */
-  installed(): (InstalledExtension & { readonly manifestPreRelease: unknown; readonly extensionPath: string })[] {
+  installed(): readonly (InstalledExtension & {
+    readonly manifestPreRelease: unknown
+    readonly extensionPath: string
+  })[] {
     const installed: (InstalledExtension & {
       readonly manifestPreRelease: unknown
       readonly extensionPath: string
@@ -62,7 +91,14 @@ export class Updater {
       const entry = manifestToInstalled(ext.packageJSON, ext.extensionUri.fsPath.startsWith(appRoot))
       if (entry) installed.push({ ...entry, extensionPath: ext.extensionUri.fsPath })
     }
-    return installed
+    // vscode.extensions.all keeps exposing extension folders left over by an
+    // update (VS Code deletes them only on a later restart), which counts one
+    // pending row per leftover copy. Filter to what extensions.json — the
+    // official badge's source of truth — registers as installed.
+    const dir = process.env['VSCODE_EXTENSIONS']
+    if (typeof dir !== 'string') return installed
+    const registered = readRegistered(dir)
+    return registered ? filterRegistered(installed, dir, registered) : installed
   }
 
   /** Install one update, warning first when its release is recent. */

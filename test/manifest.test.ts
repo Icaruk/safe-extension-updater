@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { manifestToInstalled } from '../src/core/manifest.js'
+import { filterRegistered, manifestToInstalled } from '../src/core/manifest.js'
 
 test('manifestToInstalled narrows a valid manifest, lowercasing the id', () => {
   assert.deepEqual(
@@ -33,4 +33,19 @@ test('manifestToInstalled rejects garbage, missing fields and builtins', () => {
   assert.equal(manifestToInstalled({ publisher: 'a', name: 'b', version: '' }, false), undefined)
   assert.equal(manifestToInstalled({ publisher: 'a', name: 'b', version: '1', isBuiltin: true }, false), undefined)
   assert.equal(manifestToInstalled({ publisher: 'a', name: 'b', version: '1' }, true), undefined)
+})
+
+test('filterRegistered keeps only local folders registered in extensions.json', () => {
+  const entries = [
+    { id: 'a', extensionPath: '/home/u/.vscode/extensions/pub.a-2.0.0' },
+    { id: 'a', extensionPath: '/home/u/.vscode/extensions/pub.a-1.0.0' },
+    { id: 'r', extensionPath: '/home/u/.vscode-server/extensions/pub.r-1.0.0' },
+  ]
+  const filtered = filterRegistered(entries, '/home/u/.vscode/extensions', new Set(['pub.a-2.0.0']))
+  assert.deepEqual(filtered, [entries[0], entries[2]])
+})
+
+test('filterRegistered accepts a trailing separator on the local directory', () => {
+  const entries = [{ id: 'a', extensionPath: '/home/u/.vscode/extensions/pub.a-2.0.0' }]
+  assert.deepEqual(filterRegistered(entries, '/home/u/.vscode/extensions/', new Set(['pub.a-2.0.0'])), entries)
 })
