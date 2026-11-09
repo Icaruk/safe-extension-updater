@@ -48,6 +48,7 @@ export async function collectSecurityIntel(
       }
     }),
   )
+
   // OSV checks, fail-open: a lookup error must not hide updates.
   // - available version → malware/past findings
   // - installed version → active vulns the update fixes ("Must update")
@@ -70,6 +71,7 @@ export async function collectSecurityIntel(
       repoWarnings.set(update.id, 'missing')
     }
   }
+
   const [report, installedVulns, removedList] = await Promise.all([
     fetchOsvReport(
       ids,
@@ -87,6 +89,7 @@ export async function collectSecurityIntel(
     // Microsoft's removed-extensions list, fail-open as well.
     fetchRemovedPackages(userAgent).catch(() => new Map<string, RemovedEntry>()),
   ])
+
   const removed: RemovedRow[] = []
   for (const ext of installed) {
     const entry = removedList.get(ext.id)
@@ -107,14 +110,18 @@ export async function collectSecurityIntel(
       }
     }),
   )
+
   const depQueries = new Map<string, { name: string; version: string }>() // name@version
   for (const deps of depsByExt.values()) {
     for (const dep of deps.values()) depQueries.set(`${dep.name}@${dep.version}`, dep)
   }
+
   const depFindings = await fetchOsvActiveEntries('npm', [...depQueries.values()], userAgent).catch(
     () => [] as (readonly string[] | undefined)[],
   )
+
   const activeDeps = new Map([...depQueries.keys()].map((key, index) => [key, depFindings[index] ?? []]))
+
   return {
     updates: updates.map((update) => ({
       ...update,

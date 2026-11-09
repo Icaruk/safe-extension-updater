@@ -34,15 +34,20 @@ export interface OsvReport {
 /** Per-query OSV ids; undefined when that query returned nothing. */
 export function parseOsvBatch(payload: unknown): (readonly string[] | undefined)[] {
   if (typeof payload !== 'object' || payload === null) return []
+
   const results = (payload as Record<string, unknown>)['results']
   if (!Array.isArray(results)) return []
+
   return results.map((entry) => {
     if (!isRecord(entry)) return undefined
+
     const vulns = entry['vulns']
     if (!Array.isArray(vulns)) return undefined
+
     const ids = vulns
       .map((vuln) => (isRecord(vuln) ? asString(vuln['id']) : undefined))
       .filter((id): id is string => id !== undefined)
+
     return ids.length > 0 ? ids : undefined
   })
 }
@@ -56,18 +61,23 @@ export function foldFindings(
   pairs: readonly { readonly extId: string; readonly ids: readonly string[] | undefined }[],
 ): ReadonlyMap<string, readonly string[]> {
   const folded = new Map<string, readonly string[]>()
+
   for (const { extId, ids } of pairs) {
     const union = new Set(folded.get(extId))
     for (const id of ids ?? []) union.add(id)
+
     if (union.size > 0) folded.set(extId, [...union])
   }
+
   return folded
 }
 
 /** Split a batch into POSTable chunks; OSV caps querybatch at 100 entries. */
 export function chunk<T>(items: readonly T[], size = BATCH_SIZE): T[][] {
   const chunks: T[][] = []
+
   for (let index = 0; index < items.length; index += size) chunks.push(items.slice(index, index + size))
+
   return chunks
 }
 
@@ -86,6 +96,7 @@ async function queryBatch(queries: readonly unknown[], userAgent: string): Promi
       ),
     ),
   )
+
   return batches.flatMap(parseOsvBatch)
 }
 
@@ -131,6 +142,7 @@ export async function fetchOsvReport(
   candidateCommits: ReadonlyMap<string, readonly string[]> = new Map(),
 ): Promise<OsvReport> {
   if (ids.length === 0) return { active: new Map(), pastCount: new Map() }
+
   const pkgAll: Slot[] = ids.map((id) => ({ extId: id, query: { package: { name: id, ecosystem: 'VSCode' } } }))
   const history = commitSlots(ids, historyCommits)
   const candidate = commitSlots(ids, candidateCommits)
@@ -138,6 +150,7 @@ export async function fetchOsvReport(
     extId: id,
     query: { package: { name: id, ecosystem: 'VSCode' }, version: versions.get(id) },
   }))
+
   const [all, active] = await Promise.all([
     queryBatch(
       [...pkgAll, ...history].map((slot) => slot.query),
@@ -148,14 +161,18 @@ export async function fetchOsvReport(
       userAgent,
     ),
   ])
+
   const activeMap = foldFindings(zip([...pkgActive, ...candidate], active))
   const everyMap = foldFindings(zip([...pkgAll, ...history], all))
+
   const pastCount = new Map<string, number>()
   for (const [id, every] of everyMap) {
     const now = new Set(activeMap.get(id) ?? [])
     const past = every.filter((osvId) => !now.has(osvId)).length
+
     if (past > 0) pastCount.set(id, past)
   }
+
   return { active: activeMap, pastCount }
 }
 
@@ -174,10 +191,13 @@ export async function fetchOsvActive(
     query: { package: { name: id, ecosystem: 'VSCode' }, version: versions.get(id) },
   }))
   const commits = commitSlots(ids, installedCommits)
+
   if (pkg.length === 0 && commits.length === 0) return new Map()
+
   const results = await queryBatch(
     [...pkg, ...commits].map((slot) => slot.query),
     userAgent,
   )
+
   return foldFindings(zip([...pkg, ...commits], results))
 }
