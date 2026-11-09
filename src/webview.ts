@@ -1,9 +1,9 @@
 import * as vscode from 'vscode'
 import { isRecord } from './core/narrow.js'
 import { isRecentRelease, relativeAge } from './core/release.js'
-import type { RemovedRow } from './extension.js'
 import type { RepoStatus } from './gallery/repo.js'
 import type { PendingUpdate } from './gallery/types.js'
+import type { RemovedRow } from './security.js'
 import { strings } from './strings.js'
 
 export interface UpdatesModel {
