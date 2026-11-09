@@ -73,10 +73,10 @@ export function foldFindings(
 }
 
 /** Split a batch into POSTable chunks; OSV caps querybatch at 100 entries. */
-export function chunk<T>(items: readonly T[], size = BATCH_SIZE): T[][] {
+export function chunk<T>(items: readonly T[]): T[][] {
   const chunks: T[][] = []
 
-  for (let index = 0; index < items.length; index += size) chunks.push(items.slice(index, index + size))
+  for (let index = 0; index < items.length; index += BATCH_SIZE) chunks.push(items.slice(index, index + BATCH_SIZE))
 
   return chunks
 }

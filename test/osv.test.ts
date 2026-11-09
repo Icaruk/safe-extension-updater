@@ -48,7 +48,6 @@ test('chunk splits at the OSV batch cap', () => {
   assert.deepEqual(chunk(Array.from({ length: 100 }, (_, i) => i).map(String)).length, 1)
   const hundredOne = chunk(Array.from({ length: 101 }, (_, i) => i))
   assert.deepEqual([hundredOne.length, hundredOne[0]?.length, hundredOne[1]?.length], [2, 100, 1])
-  assert.deepEqual(chunk([1, 2, 3, 4, 5], 2), [[1, 2], [3, 4], [5]])
 })
 
 /** One OSV query as sent over the wire: a commit slot or a package slot. */
