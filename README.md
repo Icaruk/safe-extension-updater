@@ -34,9 +34,8 @@ Marketplace id and its source repository (from `repository`). Three queries:
    Past findings no longer affecting the candidate version are counted as
    "past vulnerabilities".
 
-Findings are merged and deduplicated by OSV id, with no primary or secondary query.
-Commits are read over the git-over-HTTP protocol (no GitHub API quota). Any failure
-fails open: the other identities still report.
+Findings are merged and deduplicated by OSV id, commits are read over the git-over-HTTP protocol.
+Any failure fails open: the other identities still report.
 
 ## Extension settings
 
@@ -61,6 +60,8 @@ npm install
 npm run compile
 npm test
 ```
+
+Live OSV checks against known-CVE extensions (real network): `npm run test:live`.
 
 Press **F5** to launch an Extension Development Host. Package with `npx vsce package`.
 

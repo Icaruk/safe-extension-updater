@@ -116,6 +116,7 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "test": "tsx --test test/*.test.ts",
+    "test:live": "OSV_LIVE=1 tsx --test test/osv-live.test.ts",
     "lint": "biome check",
     "format": "biome check --write",
     "package": "vsce package --no-dependencies -o build/",
