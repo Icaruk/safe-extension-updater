@@ -68,7 +68,9 @@ export async function collectSecurityIntel(
       const installedSha = tagShas(repoTags.tags, update.installedVersion)
       if (installedSha) installedCommits.set(update.id, installedSha)
     } else {
-      repoWarnings.set(update.id, 'missing')
+      // A declared non-GitHub repo is public, but its commits are not in
+      // OSV (GIT ranges come from GHSA, github.com only): different warning.
+      repoWarnings.set(update.id, ref?.kind === 'other' ? 'outside-github' : 'missing')
     }
   }
 

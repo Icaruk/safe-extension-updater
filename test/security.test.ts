@@ -53,6 +53,13 @@ test('collectSecurityIntel warns per repo state and folds commit findings in', a
           availableVersion: '2.1.0',
           releasedAt: '2026-01-01T00:00:00Z',
         },
+        {
+          id: 'pub.d',
+          displayName: 'D',
+          installedVersion: '3.0.0',
+          availableVersion: '3.1.0',
+          releasedAt: '2026-01-01T00:00:00Z',
+        },
       ],
       [
         {
@@ -72,6 +79,14 @@ test('collectSecurityIntel warns per repo state and folds commit findings in', a
           repository: 'https://github.com/owner/private-repo',
           extensionPath: '/nonexistent',
         },
+        {
+          id: 'pub.d',
+          displayName: 'D',
+          version: '3.0.0',
+          prerelease: false,
+          repository: 'https://gitlab.com/owner/repo-d',
+          extensionPath: '/nonexistent',
+        },
       ],
       'test-agent',
     )
@@ -80,6 +95,7 @@ test('collectSecurityIntel warns per repo state and folds commit findings in', a
     assert.equal(intel.updates.find((update) => update.id === 'pub.b')?.installedVulns, undefined)
     assert.equal(intel.repoWarnings.get('pub.b'), 'missing')
     assert.equal(intel.repoWarnings.get('pub.c'), 'private')
+    assert.equal(intel.repoWarnings.get('pub.d'), 'outside-github')
     assert.equal(intel.repoWarnings.has('pub.a'), false)
     assert.deepEqual(intel.removed, [])
   } finally {

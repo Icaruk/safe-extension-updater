@@ -30,7 +30,7 @@ export function repoReference(raw: unknown): RepoRef {
 }
 
 /** Warning status for a repository reference; undefined = no warning. */
-export type RepoStatus = 'missing' | 'private' | undefined
+export type RepoStatus = 'missing' | 'private' | 'outside-github' | undefined
 
 /** Tags of a repository: tag name → commit sha (peeled shas win). */
 export type RepoTags = {
