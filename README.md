@@ -11,15 +11,32 @@ Extension updates are a **supply chain attack vector**: a compromised publisher 
 
 - Lists every pending update.
 - Very recent releases (default < 24 h) are flagged red and skipped by bulk updates.
-- Every update is checked against [OSV.dev](https://osv.dev), so **known malicious packages are blocked**.
+- Every update is checked against [OSV.dev](https://osv.dev) under both of its identities, Marketplace id and source repository (see [How it works](#how-it-works)), so **known malicious packages are blocked**.
 - Extensions **removed from the Marketplace** (malware, impersonation) are listed in their own section with an **Uninstall** button.
 - Updates from extensions whose **source repository is private or missing** show a yellow warning line.
 - Extensions that **bundle their npm dependencies** are checked against OSV too; vulnerable ones are flagged in red.
-- If the **installed** version has active OSV findings, the row shows a yellow **Must update** button with links to the advisories — that update fixes them.
+- If the **installed** version has active OSV findings, the row shows a yellow **Must update** button with links to the advisories: that update fixes them.
 - Installed updates apply on the next window reload; the view shows what is pending a reload.
 - `Update all safely`: updates only releases older than the configured threshold and never OSV-flagged malicious ones.
 - Detects when single extension auto-update is on, and fixes it in one click.
 - Visual Studio Marketplace and Open VSX, auto-detected.
+
+## How it works
+
+Every installed extension is checked against OSV under both of its identities, its
+Marketplace id and its source repository (from `repository`). Three queries:
+
+1. **Installed version**: Marketplace id + the commit of its git tag.
+   A finding here means your current version is affected: yellow "Must update".
+2. **Candidate version** (the pending update): Marketplace id + the commit of its git tag.
+   A finding here warns against updating into vulnerable code.
+3. **Release history**: every git tag commit of the repository.
+   Past findings no longer affecting the candidate version are counted as
+   "past vulnerabilities".
+
+Findings are merged and deduplicated by OSV id, with no primary or secondary query.
+Commits are read over the git-over-HTTP protocol (no GitHub API quota). Any failure
+fails open: the other identities still report.
 
 ## Extension settings
 

@@ -3,7 +3,7 @@ import { AutoUpdateGuard } from './autoUpdate.js'
 import { collectDependencyVersions, type PinnedDependency } from './gallery/deps.js'
 import { fetchOsvActive, fetchOsvActiveEntries, fetchOsvReport } from './gallery/osv.js'
 import { fetchRemovedPackages, type RemovedEntry } from './gallery/removed.js'
-import { fetchRepoStatus, type RepoStatus, repoReference } from './gallery/repo.js'
+import { fetchRepoTags, type RepoStatus, type RepoTags, repoReference, tagShas } from './gallery/repo.js'
 import { type GallerySetting, resolveGallery } from './gallery/select.js'
 import type { PendingUpdate } from './gallery/types.js'
 import { strings } from './strings.js'
@@ -191,36 +191,69 @@ export function activate(context: vscode.ExtensionContext): void {
       webview.setSearching(true)
       try {
         const updates = await updater.collectPending()
+        const installed = updater.installed()
+        const repoBy = new Map(installed.map((ext) => [ext.id, repoReference(ext.repository)]))
+        // Dual identity per pending update: Marketplace id AND git tags of the
+        // source repository (OSV registers many advisories by commit range only).
+        // Both are queried in parallel with the same weight; a repo whose tags
+        // cannot be read (private, renamed, offline) only drops that identity.
+        const tagsBy = new Map<string, RepoTags>()
+        await Promise.all(
+          updates.map(async (update) => {
+            const ref = repoBy.get(update.id)
+            if (ref?.kind !== 'github') return
+            try {
+              tagsBy.set(update.id, await fetchRepoTags(ref.slug, userAgent))
+            } catch (error) {
+              console.warn(`extension-updater: git tags for ${ref.slug} failed`, error)
+              tagsBy.set(update.id, { status: undefined, tags: new Map() })
+            }
+          }),
+        )
         // OSV checks, fail-open: a lookup error must not hide updates.
         // - available version → malware/past findings
         // - installed version → active vulns the update fixes ("Must update")
         const ids = updates.map((update) => update.id)
+        const historyCommits = new Map<string, readonly string[]>()
+        const candidateCommits = new Map<string, readonly string[]>()
+        const installedCommits = new Map<string, readonly string[]>()
+        const repoWarnings = new Map<string, RepoStatus>()
+        for (const update of updates) {
+          const ref = repoBy.get(update.id)
+          const repoTags = ref?.kind === 'github' ? tagsBy.get(update.id) : undefined
+          if (ref?.kind === 'github' && repoTags) {
+            if (repoTags.status) repoWarnings.set(update.id, repoTags.status)
+            historyCommits.set(update.id, [...new Set(repoTags.tags.values())])
+            const candidate = tagShas(repoTags.tags, update.availableVersion)
+            if (candidate) candidateCommits.set(update.id, candidate)
+            const installedSha = tagShas(repoTags.tags, update.installedVersion)
+            if (installedSha) installedCommits.set(update.id, installedSha)
+          } else {
+            repoWarnings.set(update.id, 'missing')
+          }
+        }
         const [report, installedVulns, removedList] = await Promise.all([
-          fetchOsvReport(ids, new Map(updates.map((update) => [update.id, update.availableVersion])), userAgent).catch(
-            () => ({ active: new Map(), pastCount: new Map() }),
-          ),
-          fetchOsvActive(ids, new Map(updates.map((update) => [update.id, update.installedVersion])), userAgent).catch(
-            () => new Map(),
-          ),
+          fetchOsvReport(
+            ids,
+            new Map(updates.map((update) => [update.id, update.availableVersion])),
+            userAgent,
+            historyCommits,
+            candidateCommits,
+          ).catch(() => ({ active: new Map(), pastCount: new Map() })),
+          fetchOsvActive(
+            ids,
+            new Map(updates.map((update) => [update.id, update.installedVersion])),
+            userAgent,
+            installedCommits,
+          ).catch(() => new Map()),
           // Microsoft's removed-extensions list, fail-open as well.
           fetchRemovedPackages(userAgent).catch(() => new Map<string, RemovedEntry>()),
         ])
-        const installed = updater.installed()
         const removed: RemovedRow[] = []
         for (const ext of installed) {
           const entry = removedList.get(ext.id)
           if (entry) removed.push({ id: ext.id, displayName: ext.displayName, version: ext.version, entry })
         }
-        // Repository warnings for the listed updates, fail-open: one GitHub
-        // API probe per row (anonymous limit 60/h is enough for a view).
-        const repoBy = new Map(installed.map((ext) => [ext.id, repoReference(ext.repository)]))
-        const repoWarnings = new Map<string, RepoStatus>()
-        await Promise.all(
-          updates.map(async (update) => {
-            const status = await fetchRepoStatus(repoBy.get(update.id) ?? { kind: 'none' }, userAgent)
-            if (status) repoWarnings.set(update.id, status)
-          }),
-        )
         // Bundled npm dependencies of the listed updates, checked against OSV
         // (ecosystem npm). Only deps with an exact bundled version are queried;
         // everything here is fail-open.
