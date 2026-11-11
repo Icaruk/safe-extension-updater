@@ -12,14 +12,15 @@ export const strings = {
   reloadBanner: (count: number): string =>
     `${count} ${count === 1 ? 'update' : 'updates'} installed. Reload VS Code to take effect.`,
   reloadVscode: 'Reload VS Code',
-  maliciousButton: 'Malware',
+  maliciousButton: 'Blocked',
   checkUpdatesLabel: 'Check for updates',
-  maliciousFindings: '⚠ Malicious code in the update (OSV):',
+  maliciousFindings: '⚠ Security findings in the update (OSV):',
   pastVulns: (count: number): string => `${count} past ${count === 1 ? 'vulnerability' : 'vulnerabilities'} found.`,
   installedVulns: '⚠ Installed version affected (OSV):',
   depVulns: '⚠ Vulnerable dependency in the current installation (OSV):',
   removedTitle: 'Removed from the Marketplace',
-  removedReason: (date: string, type: string): string => `Removed ${date} · ${type}. Uninstall it.`,
+  removedDate: (date: string): string => `Removed ${date}`,
+  removedType: (type: string): string => `Reason: ${type}`,
   uninstallButton: 'Uninstall',
   uninstallFailed: (id: string, detail: string): string => `Failed to uninstall ${id}: ${detail}`,
   repoMissing: '⚠ No public source repository declared.',
@@ -47,4 +48,19 @@ export const strings = {
   updateAllSummary: (updated: number, failures: readonly string[]): string =>
     `${updated} updated, ${failures.length} failed: ${failures.join(', ')}`,
   updateFailed: (id: string, detail: string): string => `Failed to update ${id}: ${detail}`,
+  reportButton: 'View report',
+  reportTitle: (displayName: string): string => `# Security report: ${displayName}`,
+  reportMeta: (id: string, when: string): string => `\`${id}\` · generated ${when}`,
+  reportInstalled: (version: string): string => `## Installed version: ${version}`,
+  reportCandidate: (version: string): string => `## Candidate version: ${version} (latest)`,
+  reportFindings: 'Active OSV findings:',
+  reportNoFindings: 'No active OSV findings.',
+  reportAnalysis: '## Analysis',
+  reportFixed: (ids: string): string => `- Updating **fixes**: ${ids}`,
+  reportStill: (ids: string): string => `- **Still affected** after updating: ${ids}`,
+  reportNew: (ids: string): string => `- **New** in the candidate: ${ids}`,
+  reportDeps: '## Vulnerable bundled dependencies (current installation)',
+  reportBlockedNote:
+    'One-click install stays blocked while the candidate version has active OSV findings. ' +
+    'Options: wait for a clean release, or uninstall the extension.',
 }

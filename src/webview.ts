@@ -53,6 +53,8 @@ interface WebRemoved {
   readonly id: string
   readonly displayName: string
   readonly version: string
+  readonly author: string
+  readonly date: string
   readonly reason: string
 }
 
@@ -146,6 +148,10 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
         const update = asPendingUpdate(message['update'])
         if (update) void vscode.commands.executeCommand('extensionUpdater.update', update)
       }
+      if (message['type'] === 'report') {
+        const update = asPendingUpdate(message['update'])
+        if (update) void vscode.commands.executeCommand('extensionUpdater.report', update)
+      }
     })
     // If 'ready' already fired, the handler above re-posts; otherwise this wins the race.
     this.post()
@@ -154,9 +160,9 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
   private post(): void {
     const view = this.view
     if (!view) return
-    // Activity-bar badge mirrors the native Extensions icon: pending-update count.
-    const count = this.model.updates.length
-    view.badge = count > 0 ? { value: count, tooltip: strings.badgeTooltip(count) } : undefined
+    // No view.badge here: VS Code SUMS the badges of every view in the
+    // container (compositeBarActions.ts), and the hidden badge tree view in
+    // extension.ts already carries the count, a second writer doubled it.
     const now = new Date()
     const autoUpdate = this.resolveAutoUpdate()
     const waiting = new Set(this.model.pendingReload)
@@ -183,7 +189,9 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
       id: row.id,
       displayName: row.displayName,
       version: row.version,
-      reason: strings.removedReason(row.entry.date, row.entry.type),
+      author: row.id.split('.')[0] ?? '',
+      date: strings.removedDate(row.entry.date),
+      reason: strings.removedType(row.entry.type),
     }))
     void view.webview.postMessage({
       type: 'state',
@@ -204,6 +212,7 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
         pendingUpdates: strings.pendingUpdates,
         maliciousFindings: strings.maliciousFindings,
         maliciousButton: strings.maliciousButton,
+        report: strings.reportButton,
         mustUpdate: strings.mustUpdateButton,
         updated: strings.updatedButton,
         updating: strings.updatingButton,
@@ -251,10 +260,10 @@ function renderHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
 <div id="banner"></div>
 <div id="actions-group"></div>
 <div id="reload-banner"></div>
+<div id="removed"></div>
 <div id="pending-title"></div>
 <div id="status"></div>
 <div id="list"></div>
-<div id="removed"></div>
 <script nonce="${nonce}" src="${scriptUri}"></script>
 </body>
 </html>`

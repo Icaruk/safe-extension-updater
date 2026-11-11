@@ -93,8 +93,8 @@ export class Updater {
     }
     // vscode.extensions.all keeps exposing extension folders left over by an
     // update (VS Code deletes them only on a later restart), which counts one
-    // pending row per leftover copy. Filter to what extensions.json — the
-    // official badge's source of truth — registers as installed.
+    // pending row per leftover copy. Filter to what extensions.json the
+    // official badge's source of truth, registers as installed.
     const dir = process.env['VSCODE_EXTENSIONS']
     if (typeof dir !== 'string') return installed
     const registered = readRegistered(dir)

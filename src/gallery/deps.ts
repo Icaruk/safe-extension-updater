@@ -1,7 +1,7 @@
 /**
  * Bundled-dependency lookup for an installed extension. The vsix ships the
  * extension's package.json and, when not webpack-bundled, a node_modules
- * tree. The WHOLE tree is flattened (transitives included — that is where
+ * tree. The WHOLE tree is flattened (transitives included, that is where
  * npm worms live) and deduped by name@version; every pinned package gets
  * one OSV query. Bundled (webpack) extensions expose nothing: skipped.
  */

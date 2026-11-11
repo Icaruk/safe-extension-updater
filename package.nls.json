@@ -6,6 +6,7 @@
   "command.category": "Safe Extension Updater",
   "command.updateAll.title": "Update all safely",
   "command.refresh.title": "Refresh",
+  "command.report.title": "Open security report",
   "configuration.title": "Safe Extension Updater",
   "config.earlyReleaseProtectionHours.description": "Hours after a release during which installs are guarded: it is flagged red in the list, single updates ask for confirmation and Update all skips it.",
   "config.refreshIntervalHours.description": "Hours between automatic checks. 0 disables periodic checks.",

@@ -1,8 +1,10 @@
 import * as vscode from 'vscode'
 import { AutoUpdateGuard } from './autoUpdate.js'
+import { isRecentRelease } from './core/release.js'
 import type { RepoStatus } from './gallery/repo.js'
 import { type GallerySetting, resolveGallery } from './gallery/select.js'
 import type { PendingUpdate } from './gallery/types.js'
+import { buildReport } from './report.js'
 import { collectSecurityIntel, type RemovedRow } from './security.js'
 import { strings } from './strings.js'
 import { Updater } from './updater.js'
@@ -24,20 +26,29 @@ function numberSetting(configuration: vscode.WorkspaceConfiguration, key: string
 
 /**
  * Development-only sample rows covering every UI case (F5 launch):
- * plain update, updated-this-session, downgrade, active malware finding,
- * recent + past vulns, installed-version vuln ("Must update"),
- * private repository warning, bundled-dependency finding.
+ * plain mature update, recent-but-clean (muted + confirm modal, off the
+ * badge), updated-this-session, past vulns, Must update (mature and
+ * recent), blocked candidate with CVEs (security report), vulnerable
+ * bundled dependency, private/missing/outside-GitHub repository notices.
+ * The removed-from-Marketplace row is appended in the dev block of refresh().
  * Ids are fake on purpose: clicking Update on them fails harmlessly.
  */
 function mockUpdates(): readonly PendingUpdate[] {
   const hoursAgo = (hours: number): string => new Date(Date.now() - hours * 3_600_000).toISOString()
   return [
     {
-      id: 'sample.demo',
+      id: 'sample.plain',
       displayName: 'React checker',
       installedVersion: '1.0.0',
       availableVersion: '1.2.0',
       releasedAt: hoursAgo(72),
+    },
+    {
+      id: 'sample.recent',
+      displayName: 'Fresh release',
+      installedVersion: '1.2.0',
+      availableVersion: '1.3.0',
+      releasedAt: hoursAgo(1),
     },
     {
       id: 'sample.updated',
@@ -47,7 +58,7 @@ function mockUpdates(): readonly PendingUpdate[] {
       releasedAt: hoursAgo(72),
     },
     {
-      id: 'sample.demo',
+      id: 'sample.past',
       displayName: 'DB manager',
       installedVersion: '0.5.0',
       availableVersion: '0.6.0',
@@ -55,15 +66,32 @@ function mockUpdates(): readonly PendingUpdate[] {
       pastVulns: 1,
     },
     {
-      id: 'sample.shrinker',
-      displayName: 'CSS shrinker',
-      installedVersion: '0.9.0',
-      availableVersion: '1.0.0',
-      releasedAt: hoursAgo(8),
-      pastVulns: 0,
+      id: 'sample.must',
+      displayName: 'Analytics helper',
+      installedVersion: '2.0.0',
+      availableVersion: '2.1.0',
+      releasedAt: hoursAgo(72),
+      installedVulns: ['GHSA-DEMO-0002'],
     },
     {
-      id: 'sample.demo',
+      id: 'sample.must-recent',
+      displayName: 'Image optimizer',
+      installedVersion: '1.0.0',
+      availableVersion: '1.1.0',
+      releasedAt: hoursAgo(1),
+      installedVulns: ['GHSA-DEMO-0003'],
+    },
+    {
+      id: 'sample.blocked',
+      displayName: 'Theme booster',
+      installedVersion: '1.0.0',
+      availableVersion: '2.0.0',
+      releasedAt: hoursAgo(72),
+      malicious: ['GHSA-DEMO-0004', 'GHSA-DEMO-0005'],
+      installedVulns: ['GHSA-DEMO-0005', 'GHSA-DEMO-0006'],
+    },
+    {
+      id: 'sample.deps',
       displayName: 'Astro linter',
       installedVersion: '2.1.0',
       availableVersion: '2.2.0',
@@ -75,21 +103,25 @@ function mockUpdates(): readonly PendingUpdate[] {
       ],
     },
     {
-      id: 'sample.demo',
-      displayName: 'Icon generator',
-      installedVersion: '1.4.0',
-      availableVersion: '1.5.0',
-      releasedAt: hoursAgo(1),
-      malicious: ['MAL-DEMO-0001'],
-      pastVulns: 3,
+      id: 'sample.shrinker',
+      displayName: 'CSS shrinker',
+      installedVersion: '0.9.0',
+      availableVersion: '1.0.0',
+      releasedAt: hoursAgo(8),
     },
     {
-      id: 'sample.demo',
-      displayName: 'JSON tools',
-      installedVersion: '0.8.0',
-      availableVersion: '0.9.0',
-      releasedAt: hoursAgo(30),
-      installedVulns: ['MAL-DEMO-0002'],
+      id: 'sample.norepo',
+      displayName: 'QR generator',
+      installedVersion: '1.1.0',
+      availableVersion: '1.2.0',
+      releasedAt: hoursAgo(72),
+    },
+    {
+      id: 'sample.outsider',
+      displayName: 'Git client lite',
+      installedVersion: '4.0.0',
+      availableVersion: '4.1.0',
+      releasedAt: hoursAgo(72),
     },
   ]
 }
@@ -160,7 +192,18 @@ export function activate(context: vscode.ExtensionContext): void {
     },
   })
   const syncBadge = (): void => {
-    const count = cache.updates.length
+    // Only updates worth acting on now go on the icon: releases past the
+    // early-release threshold, or any row with active security findings.
+    // Fresh-but-clean releases stay off (they are still listed in the view).
+    const now = new Date()
+    const threshold = readConfig().thresholdHours
+    const count = cache.updates.filter(
+      (update) =>
+        !isRecentRelease(update.releasedAt, now, threshold) ||
+        update.installedVulns?.length ||
+        update.malicious?.length ||
+        update.depVulns?.length,
+    ).length
     badgeView.badge = count > 0 ? { value: count, tooltip: strings.badgeTooltip(count) } : undefined
   }
 
@@ -195,7 +238,21 @@ export function activate(context: vscode.ExtensionContext): void {
           cache = {
             ...cache,
             updates: [...cache.updates, ...mockUpdates()],
-            repoWarnings: new Map([...cache.repoWarnings, ['sample.shrinker', 'private']]),
+            repoWarnings: new Map([
+              ...cache.repoWarnings,
+              ['sample.shrinker', 'private'],
+              ['sample.norepo', 'missing'],
+              ['sample.outsider', 'outside-github'],
+            ]),
+            removed: [
+              ...cache.removed,
+              {
+                id: 'sample.removed',
+                displayName: 'Cursor Spy',
+                version: '1.2.3',
+                entry: { date: '2026-11-01', type: 'Malicious' },
+              },
+            ],
           }
           setWaitingReload([...new Set([...waitingReload, 'sample.updated'])])
         }
@@ -251,6 +308,18 @@ export function activate(context: vscode.ExtensionContext): void {
         updatingId = undefined
         webview.invalidate()
       }
+    }),
+    vscode.commands.registerCommand('extensionUpdater.report', (value: unknown) => {
+      const update = asPendingUpdate(value)
+      if (!update) return
+      // Prefer the cached row: it carries the security findings the webview
+      // message strips on its round trip.
+      const full = cache.updates.find((entry) => entry.id === update.id) ?? update
+      const document = vscode.workspace.openTextDocument({
+        content: buildReport(full, new Date()),
+        language: 'markdown',
+      })
+      void document.then((file) => vscode.window.showTextDocument(file, { preview: true }))
     }),
     vscode.commands.registerCommand('extensionUpdater.uninstall', async (id: unknown) => {
       if (typeof id !== 'string') return

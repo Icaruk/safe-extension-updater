@@ -90,6 +90,7 @@ function render() {
 
   const removedBox = document.getElementById('removed')
   removedBox.textContent = ''
+  removedBox.className = state.removed?.length ? 'removed separated' : ''
 
   if (state.removed?.length) {
     const title = document.createElement('div')
@@ -107,6 +108,13 @@ function removedRow(entry) {
   const rowEl = document.createElement('div')
   rowEl.className = 'row removed'
 
+  // Same anatomy as an update row: letter fallback icon (the removal list
+  // carries no icon URL), name, version·author line, action on the right.
+  const icon = document.createElement('div')
+  icon.className = 'icon fallback'
+  icon.textContent = entry.displayName.charAt(0).toUpperCase()
+  rowEl.appendChild(icon)
+
   const main = document.createElement('div')
   main.className = 'main'
 
@@ -116,11 +124,21 @@ function removedRow(entry) {
   name.title = entry.id
 
   const line2 = document.createElement('div')
-  line2.className = 'line2 removed-reason'
-  line2.textContent = `${entry.version} · ${entry.reason}`
+  line2.className = 'line2'
+  line2.textContent = `${entry.version} · ${entry.author}`
+
+  const date = document.createElement('div')
+  date.className = 'line2 removed-reason'
+  date.textContent = entry.date
+
+  const reason = document.createElement('div')
+  reason.className = 'line2 removed-reason'
+  reason.textContent = entry.reason
 
   main.appendChild(name)
   main.appendChild(line2)
+  main.appendChild(date)
+  main.appendChild(reason)
   rowEl.appendChild(main)
 
   const tag = document.createElement('span')
@@ -223,6 +241,20 @@ function row(update) {
     tag.className = `tag ${update.updated ? 'updated' : 'malware'}`
     tag.textContent = update.updated ? state.labels.updated : state.labels.maliciousButton
     rowEl.appendChild(tag)
+    // Blocked rows get no install path: the report explains both versions'
+    // findings so the user can decide (wait / uninstall). Stacked under the tag.
+    if (update.malicious?.length) {
+      const column = document.createElement('div')
+      column.className = 'tag-column'
+      column.appendChild(tag)
+      const report = document.createElement('button')
+      report.className = 'report'
+      report.textContent = state.labels.report
+      report.addEventListener('click', () => vscode.postMessage({ type: 'report', update }))
+      column.appendChild(report)
+      rowEl.appendChild(column)
+      return rowEl
+    }
     return rowEl
   }
 

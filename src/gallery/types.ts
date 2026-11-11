@@ -29,7 +29,8 @@ export interface PendingUpdate {
   /** ISO-8601 publication date of the available version */
   readonly releasedAt: string
   readonly iconUrl?: string
-  /** OSV ids (MAL-*) of entries affecting the available version */
+  /** ALL active OSV ids affecting the available version (CVEs and MAL-* alike);
+   * any finding blocks one-click install and offers the security report */
   readonly malicious?: readonly string[]
   /** OSV entries filed for this extension that do not affect the available version */
   readonly pastVulns?: number

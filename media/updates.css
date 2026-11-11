@@ -26,7 +26,8 @@ body { padding: 8px 12px; font-family: var(--vscode-font-family); font-size: var
 .past-vulns { color: var(--vscode-editorWarning-foreground); font-size: 0.9em; margin-top: 8px; }
 .repo-warning { color: var(--vscode-editorWarning-foreground); font-size: 0.9em; margin-top: 3px; }
 .repo-notice { color: var(--vscode-descriptionForeground); font-size: 0.9em; margin-top: 3px; }
-.removed-title { text-align: center; padding: 10px 0 2px; color: var(--vscode-errorForeground); font-weight: 600; }
+.removed-title { text-align: center; padding: 10px 0; color: var(--vscode-descriptionForeground); border-bottom: 1px solid var(--vscode-panel-border); }
+.removed.separated { padding-top: 10px; padding-bottom: 12px; margin-bottom: 14px; }
 .removed-reason { white-space: normal; }
 .installed-vulns { color: var(--vscode-editorWarning-foreground); font-weight: 600; margin-top: 3px; }
 .installed-vulns a { color: inherit; }
@@ -50,6 +51,7 @@ button.must:hover { filter: brightness(0.85); }
 .tag.updated { border: 1px solid var(--vscode-charts-green); color: var(--vscode-charts-green); }
 .tag.updating { border: 1px solid var(--vscode-descriptionForeground); color: var(--vscode-descriptionForeground); }
 .tag.malware { border: 1px solid var(--vscode-errorForeground); color: var(--vscode-errorForeground); }
+.tag-column { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: none; }
 .banner.reload { border-color: var(--vscode-charts-green); color: var(--vscode-foreground); display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
 .banner.reload button { flex: none; }
 .row button { flex: none; min-width: 0; padding: 4px 8px; }

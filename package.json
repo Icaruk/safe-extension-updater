@@ -2,7 +2,7 @@
   "name": "safe-extension-updater",
   "displayName": "Safe Extension Updater",
   "description": "%extension.description%",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "publisher": "icaruk",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -76,6 +76,12 @@
         "title": "%command.refresh.title%",
         "category": "%command.category%",
         "icon": "$(sync)"
+      },
+      {
+        "command": "extensionUpdater.report",
+        "title": "%command.report.title%",
+        "category": "%command.category%",
+        "icon": "$(report)"
       }
     ],
     "configuration": {
