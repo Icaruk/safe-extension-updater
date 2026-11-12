@@ -24,7 +24,7 @@ Extension updates are a **supply chain attack vector**: a compromised publisher 
 ## How it works
 
 Every installed extension is checked against OSV under both of its identities, its
-Marketplace id and its source repository (from `repository`). Three queries:
+Marketplace id and its source repository (from `repository`). Four queries:
 
 1. **Installed version**: Marketplace id + the commit of its git tag.
    A finding here means your current version is affected: yellow "Must update".
@@ -33,6 +33,10 @@ Marketplace id and its source repository (from `repository`). Three queries:
 3. **Release history**: every git tag commit of the repository.
    Past findings no longer affecting the candidate version are counted as
    "past vulnerabilities".
+4. **Bundled npm dependencies**: the extension's shipped `node_modules` tree is
+   read from disk — the whole flattened tree, transitive dependencies included —
+   deduplicated by `name@version`, and each package queried against OSV's npm
+   ecosystem. Webpack-bundled extensions ship no `node_modules` and are skipped.
 
 Findings are merged and deduplicated by OSV id, commits are read over the git-over-HTTP protocol.
 Any failure fails open: the other identities still report.
