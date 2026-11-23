@@ -117,11 +117,11 @@ export class Updater {
   }
 
   /**
-   * Install every non-recent, non-flagged update sequentially, with no
-   * confirmation: "Update all safely" = only releases older than the
-   * configured threshold and never OSV-flagged malicious ones.
-   * Per-extension failures are collected, never fatal. Returns the ids
-   * actually installed.
+   * Install every non-recent, non-flagged update, with no confirmation:
+   * "Update all safely" = only releases older than the configured threshold
+   * and never OSV-flagged malicious ones. Installs run in parallel (the host
+   * queues same-extension installs itself). Per-extension failures are
+   * collected, never fatal. Returns the ids actually installed.
    */
   async updateAll(
     updates: readonly PendingUpdate[],
@@ -132,18 +132,21 @@ export class Updater {
     const selected = updates.filter(
       (update) => !isRecentRelease(update.releasedAt, now, thresholdHours) && !update.malicious?.length,
     )
-    const updatedIds: string[] = []
-    const failures: string[] = []
-    for (const update of selected) {
-      onInstalling?.(update.id)
-      try {
-        await this.install(update)
-        updatedIds.push(update.id)
-      } catch {
-        failures.push(update.id)
-      }
+    const results = await Promise.all(
+      selected.map(async (update) => {
+        onInstalling?.(update.id)
+        try {
+          await this.install(update)
+          return { id: update.id, ok: true }
+        } catch {
+          return { id: update.id, ok: false }
+        }
+      }),
+    )
+    return {
+      updatedIds: results.filter((result) => result.ok).map((result) => result.id),
+      failures: results.filter((result) => !result.ok).map((result) => result.id),
     }
-    return { updatedIds, failures }
   }
 
   /**

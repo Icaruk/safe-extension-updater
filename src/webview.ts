@@ -13,8 +13,8 @@ export interface UpdatesModel {
   readonly pendingReload: readonly string[]
   /** `extensionUpdater.earlyReleaseProtectionHours`, read live so config changes apply on refresh */
   readonly thresholdHours: number
-  /** id with an install in flight right now; shown as a grey "Updating…" tag */
-  readonly updatingId: string | undefined
+  /** ids with installs in flight right now; shown as a grey "Updating…" tag */
+  readonly updatingIds: readonly string[]
   /** installed extensions on Microsoft's removed-packages list */
   readonly removed: readonly RemovedRow[]
   /** per-id repository warning for the listed updates */
@@ -166,6 +166,7 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
     const now = new Date()
     const autoUpdate = this.resolveAutoUpdate()
     const waiting = new Set(this.model.pendingReload)
+    const updating = new Set(this.model.updatingIds)
     const updates: WebUpdate[] = this.model.updates.map((update) => ({
       id: update.id,
       displayName: update.displayName,
@@ -178,7 +179,7 @@ export class UpdatesWebviewProvider implements vscode.WebviewViewProvider {
       age: relativeAge(update.releasedAt, now),
       recent: isRecentRelease(update.releasedAt, now, this.model.thresholdHours),
       updated: waiting.has(update.id),
-      updating: update.id === this.model.updatingId,
+      updating: updating.has(update.id),
       malicious: update.malicious,
       pastVulnsLabel: update.pastVulns ? strings.pastVulns(update.pastVulns) : undefined,
       installedVulns: update.installedVulns,

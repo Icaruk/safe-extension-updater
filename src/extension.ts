@@ -148,8 +148,8 @@ export function activate(context: vscode.ExtensionContext): void {
   let refreshing: Promise<void> | undefined
   let queryError: string | undefined
   let timer: ReturnType<typeof setInterval> | undefined
-  /** id with an install in flight; shown as a grey "Updating…" tag */
-  let updatingId: string | undefined
+  /** ids with an install in flight; shown as a grey "Updating…" tag */
+  const updatingIds = new Set<string>()
 
   const model: UpdatesModel = {
     get updates() {
@@ -161,8 +161,8 @@ export function activate(context: vscode.ExtensionContext): void {
     get thresholdHours() {
       return readConfig().thresholdHours
     },
-    get updatingId() {
-      return updatingId
+    get updatingIds() {
+      return [...updatingIds]
     },
     get removed() {
       return cache.removed
@@ -292,7 +292,7 @@ export function activate(context: vscode.ExtensionContext): void {
       const update = asPendingUpdate(value)
       if (!update) return
       try {
-        updatingId = update.id
+        updatingIds.add(update.id)
         webview.invalidate()
         const outcome = await updater.updateOne(update, readConfig().thresholdHours)
         if (outcome === 'updated') {
@@ -305,7 +305,7 @@ export function activate(context: vscode.ExtensionContext): void {
       } catch (error) {
         void vscode.window.showErrorMessage(strings.updateFailed(update.id, String(error)))
       } finally {
-        updatingId = undefined
+        updatingIds.delete(update.id)
         webview.invalidate()
       }
     }),
@@ -341,11 +341,13 @@ export function activate(context: vscode.ExtensionContext): void {
           cache.updates.filter((entry) => !skip.has(entry.id)),
           readConfig().thresholdHours,
           (id) => {
-            updatingId = id
+            updatingIds.add(id)
             webview.invalidate()
           },
         )
-        updatingId = undefined
+        // Only clear ids this run added: a single-row Update clicked meanwhile
+        // keeps its own "Updating…" tag until its own install finishes.
+        for (const id of [...result.updatedIds, ...result.failures]) updatingIds.delete(id)
         setWaitingReload([...new Set([...waitingReload, ...result.updatedIds])])
         if (result.failures.length > 0) {
           void vscode.window.showErrorMessage(strings.updateAllSummary(result.updatedIds.length, result.failures))
